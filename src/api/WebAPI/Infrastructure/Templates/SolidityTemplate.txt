@@ -1,0 +1,72 @@
+// SPDX-License-Identifier: {{license}}{{^license}}MIT{{/license}}
+pragma solidity ^{{pragma_version}}{{^pragma_version}}0.8.0{{/pragma_version}};
+
+{{#imports}}
+import "{{.}}";
+{{/imports}}
+
+contract {{name}} {
+
+{{#state}}
+    // State variables
+    {{#each this}}
+    {{#if visibility}}{{visibility}}{{else}}public{{/if}} {{type}} {{name}};
+    {{/each}}
+{{/state}}
+
+{{#events}}
+    // Events
+    {{#each this}}
+    event {{name}}(
+        {{#each params}}
+        {{type}}{{#if indexed}} indexed{{/if}} {{name}}{{#unless @last}}, {{/unless}}
+        {{/each}}
+    );
+    {{/each}}
+{{/events}}
+
+{{#modifiers}}
+    // Modifiers
+    {{#each this}}
+    modifier {{name}}() {
+        {{#each body}}
+        {{this}}
+        {{/each}}
+        _;
+    }
+    {{/each}}
+{{/modifiers}}
+
+{{#constructor}}
+    // Constructor
+    constructor(
+        {{#each params}}
+        {{type}} {{name}}{{#unless @last}}, {{/unless}}
+        {{/each}}
+    ) {
+        {{#each body}}
+        {{this}}
+        {{/each}}
+    }
+{{/constructor}}
+
+{{#functions}}
+    // Functions
+    {{#each this}}
+    function {{name}}(
+        {{#each params}}
+        {{type}} {{name}}{{#unless @last}}, {{/unless}}
+        {{/each}}
+    ) {{#if visibility}}{{visibility}}{{else}}public{{/if}}{{#if modifiers}} {{modifiers}}{{/if}}{{#if returns}} returns ({{returns}}){{/if}} {
+        {{#if body}}
+        {{#each body}}
+        {{this}}
+        {{/each}}
+        {{else}}
+        // TODO: implement
+        {{/if}}
+    }
+    {{/each}}
+{{/functions}}
+    
+}

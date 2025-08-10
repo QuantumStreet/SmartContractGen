@@ -7,14 +7,16 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Handlebars.Net" Version="2.1.6" />
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="9.0.7" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
   </ItemGroup>
 
   <ItemGroup>
     <Folder Include="Infrastructure\Controllers\" />
+    <Folder Include="Infrastructure\DTOs\Requests\" />
+    <Folder Include="Infrastructure\DTOs\Responses\" />
     <Folder Include="Infrastructure\Extensions\" />
-    <Folder Include="Infrastructure\Services\" />
-    <Folder Include="Infrastructure\Templates\" />
   </ItemGroup>
 
 </Project>
