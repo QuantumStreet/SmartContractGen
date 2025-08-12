@@ -8,7 +8,7 @@ public static class RegisterLocalServices
         services.AddScoped<IContractGenerator>(provider => provider.GetRequiredService<ISolidityContractGenerator>());
 
         services.AddScoped<ISolidityContractCompiler, SolidityContractCompiler>();
-        services.AddScoped<ISolidityContractCompiler>(provider => provider.GetRequiredService<SolidityContractCompiler>());
+        services.AddScoped<IContractCompiler>(provider => provider.GetRequiredService<ISolidityContractCompiler>());
 
         services.AddScoped<ISolidityContractDeployer, SolidityContractDeployer>();
         services.AddScoped<IContractDeployer>(provider => provider.GetRequiredService<ISolidityContractDeployer>());
