@@ -15,6 +15,7 @@ public static class RegisterLocalServices
 
         services.AddScoped<IContractServiceFactory, ContractServiceFactory>();
         services.AddSingleton<IHandlebars>(Handlebars.Create());
+        
         return services;
     }
 }

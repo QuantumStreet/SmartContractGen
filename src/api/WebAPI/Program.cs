@@ -21,6 +21,10 @@ builder.Services.Configure<BrotliCompressionProviderOptions>(o => { o.Level = Co
 
 builder.Services.Configure<GzipCompressionProviderOptions>(o => { o.Level = CompressionLevel.Fastest; });
 
+builder.Services.Configure<EthereumOptions>(
+    builder.Configuration.GetSection("Ethereum"));
+
+
 WebApplication app = builder.Build();
 
 if (app.Environment.IsDevelopment())
@@ -28,6 +32,7 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+
 app.UseResponseCaching();
 app.UseResponseCompression();
 app.UseExceptionHandler("/error");

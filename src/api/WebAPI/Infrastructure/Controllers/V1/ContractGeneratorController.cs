@@ -25,8 +25,8 @@ public sealed class ContractGeneratorController(IContractServiceFactory factory)
         IContractCompiler compiler = factory.GetCompiler(request.Language);
         CompileContractResponse compileResult = await compiler.CompileAsync(request.SourceCodeFile);
 
-        using MemoryStream zipStream = new ();
-        using (ZipArchive archive = new (zipStream, ZipArchiveMode.Create, leaveOpen: true))
+        using MemoryStream zipStream = new();
+        using (ZipArchive archive = new(zipStream, ZipArchiveMode.Create, leaveOpen: true))
         {
             ZipArchiveEntry abiEntry = archive.CreateEntry(compileResult.AbiFileName);
             await using (Stream entryStream = abiEntry.Open())
@@ -45,10 +45,5 @@ public sealed class ContractGeneratorController(IContractServiceFactory factory)
 
     [HttpPost("deploy")]
     public async Task<IActionResult> ContractDeployAsync([FromForm] DeployContractRequest request)
-    {
-        var deployer = factory.GetDeployer(request.Language);
-        var deployResult = await deployer.DeployAsync(request.AbiFile, request.BytecodeFile);
-
-        return Ok(deployResult);
-    }
+        => Ok(await factory.GetDeployer(request.Language).DeployAsync(request.AbiFile, request.BytecodeFile));
 }
