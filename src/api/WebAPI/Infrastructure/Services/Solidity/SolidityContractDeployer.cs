@@ -1,3 +1,5 @@
+using System.Numerics;
+
 namespace WebAPI.Infrastructure.Services.Solidity;
 
 public sealed class SolidityContractDeployer(
@@ -5,7 +7,7 @@ public sealed class SolidityContractDeployer(
     ILogger<SolidityContractDeployer> logger ) : ISolidityContractDeployer
 {
     private readonly EthereumOptions _options = options.Value;
-
+    private readonly BigInteger _gasLimit = 3000000;
     public async Task<DeployContractResponse> DeployAsync(
         IFormFile abiFile,
         IFormFile bytecodeFile,
@@ -30,7 +32,7 @@ public sealed class SolidityContractDeployer(
             TransactionReceipt receipt = await web3.Eth.DeployContract
                 .SendRequestAndWaitForReceiptAsync(
                     abi, bytecode, account.Address,
-                    new Nethereum.Hex.HexTypes.HexBigInteger(3000000)
+                    new Nethereum.Hex.HexTypes.HexBigInteger(_gasLimit)
                 );
 
             bool success = receipt.Status.Value == 1;
