@@ -1,5 +1,3 @@
 namespace WebAPI.Infrastructure.Models;
 
-public abstract class ContractDescription
-{
-}
+public abstract class ContractDescription;

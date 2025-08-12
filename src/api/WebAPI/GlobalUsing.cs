@@ -1,2 +1,22 @@
+global using System.Web;
+global using System.Net;
+global using System.Text;
 global using Newtonsoft.Json;
+global using HandlebarsDotNet;
+global using System.Globalization;
+global using Newtonsoft.Json.Linq;
+global using Microsoft.AspNetCore.Mvc;
 global using System.Collections.Generic;
+global using WebAPI.Infrastructure.Enums;
+global using WebAPI.Infrastructure.Extensions;
+global using System.Text.Json.Serialization;
+global using Microsoft.AspNetCore.Diagnostics;
+global using WebAPI.Infrastructure.DTOs.Requests; 
+global using WebAPI.Infrastructure.Extensions.DI;
+global using WebAPI.Infrastructure.DTOs.Responses;
+global using System.ComponentModel.DataAnnotations;
+global using WebAPI.Infrastructure.Controllers.Base;
+global using WebAPI.Infrastructure.Patterns.Factory;
+global using WebAPI.Infrastructure.Services.Solidity;
+global using WebAPI.Infrastructure.Services.BaseContracts;
+
