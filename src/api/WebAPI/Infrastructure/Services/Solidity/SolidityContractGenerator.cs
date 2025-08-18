@@ -16,7 +16,7 @@ public class SolidityContractGenerator : ISolidityContractGenerator
         RegisterHelpers(_handlebars);
     }
 
-    public async Task<GenerateContractResponse> GenerateAsync(IFormFile jsonFile, CancellationToken token = default)
+    public async Task<GenerateContractResponse> GenerateAsync(IFormFile? jsonFile, CancellationToken token = default)
     {
         if (jsonFile == null || jsonFile.Length == 0)
         {
