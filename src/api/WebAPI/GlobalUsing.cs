@@ -18,6 +18,7 @@ global using WebAPI.Infrastructure.Options;
 global using System.Text.Json.Serialization;
 global using Microsoft.AspNetCore.Diagnostics;
 global using WebAPI.Infrastructure.Extensions;
+global using WebAPI.Infrastructure.Services.Rust;
 global using WebAPI.Infrastructure.DTOs.Requests; 
 global using WebAPI.Infrastructure.Extensions.DI;
 global using WebAPI.Infrastructure.DTOs.Responses;

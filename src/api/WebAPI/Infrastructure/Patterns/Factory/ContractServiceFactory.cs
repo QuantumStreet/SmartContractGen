@@ -5,6 +5,7 @@ public class ContractServiceFactory(IServiceProvider serviceProvider) : IContrac
     public IContractGenerator GetGenerator(SmartContractLanguage language) => language switch
     {
         SmartContractLanguage.Solidity => serviceProvider.GetRequiredService<ISolidityContractGenerator>(),
+        SmartContractLanguage.Rust => serviceProvider.GetRequiredService<IRustContractGenerator>(),
         _ => throw new NotSupportedException($"Generator for language {language} is not supported.")
     };
 
