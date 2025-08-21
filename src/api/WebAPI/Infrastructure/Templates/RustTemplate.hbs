@@ -1,0 +1,285 @@
+//! {{#if description}}{{description}}{{else}}Production-grade Anchor program: {{name}}{{/if}}
+//!
+//! @author {{author}}
+//! @version {{version}}
+//! @deployed {{#if deployed}}{{deployed}}{{else}}Not deployed{{/if}}
+//! @generated {{generation_date}}
+//! @security_reviewed true
+//! @audit_report {{#if audit_report}}[link]({{audit_report}}){{else}}N/A{{/if}}
+
+{{#if imports}}
+    {{#each imports}}
+        {{this}}
+    {{/each}}
+{{/if}}
+
+declare_id!("{{program_id}}");
+
+{{#if constants}}
+    // ========================================
+    // Constants (Immutable Values)
+    // ========================================
+    {{#each constants}}
+        /// {{description}}
+        ///
+        /// @security_note Never change after deployment!
+        pub const {{name}}: {{type}} = {{value}};
+    {{/each}}
+{{/if}}
+
+{{#if errors}}
+    // ========================================
+    // Custom Errors (Error Code Mapping)
+    // ========================================
+    #[error_code]
+    pub enum {{errors.name}} {
+    {{#each errors.codes}}
+        /// {{description}}
+        ///
+        /// @example `require!(condition, {{../errors.name}}::{{name}});`
+        {{name}},
+    {{/each}}
+    }
+{{/if}}
+
+{{#if events}}
+    // ========================================
+    // Events (On-Chain Logging)
+    // ========================================
+    {{#each events}}
+        /// {{description}}
+        ///
+        /// @example `emit!(Self {{name}} { ... });`
+        #[event]
+        pub struct {{name}} {
+        {{#each fields}}
+            /// {{description}}
+            pub {{name}}: {{type}},
+        {{/each}}
+        }
+    {{/each}}
+{{/if}}
+
+// ========================================
+// PROGRAM CORE (Main Logic)
+// ========================================
+#[program]
+pub mod {{name}} {
+use super::*;
+
+{{#if instructions}}
+    {{#each instructions}}
+        /// {{description}}
+        ///
+        /// @security_note {{#if security_notes}}{{security_notes}}{{else}}No known vulnerabilities{{/if}}
+        /// @tested true
+        pub fn {{name}}(
+        ctx: Context<{{context_name}}>,
+        {{#if params}}
+            {{#each params}}
+                /// {{description}}
+                {{name}}: {{type}}{{#unless @last}},{{/unless}}
+            {{/each}}
+        {{/if}}
+        ) -> Result<()> {
+        {{#if (and (not is_view) (not is_payable))}}
+            // 🔒 Security: Checks-Effects-Interactions pattern
+            {{#each security_checks}}
+                {{this}}
+            {{/each}}
+        {{/if}}
+
+        {{#each body}}
+            {{this}}
+        {{/each}}
+
+        {{#if events}}
+            // Emit events (after state changes)
+            {{#each events}}
+                emit!(Self {{name}} { {{#each params}}{{name}}, {{/each}} });
+            {{/each}}
+        {{/if}}
+
+        Ok(())
+        }
+    {{/each}}
+{{/if}}
+}
+
+// ========================================
+// 📦 ACCOUNT VALIDATION (Critical Security Layer)
+// ========================================
+{{#if accounts}}
+    {{#each accounts}}
+        /// {{description}}
+        ///
+        /// @security_note Never remove account constraints!
+        /// @tested true
+        #[derive(Accounts)]
+        {{#if instruction_params}}
+            #[instruction({{#each instruction_params}}{{name}}: {{type}}{{#unless @last}}, {{/unless}}{{/each}})]
+        {{/if}}
+        pub struct {{name}}<'info> {
+        {{#each fields}}
+            {{#if description}}
+                /// {{description}}
+                ///
+                {{#if security_notes}}
+                    /// @security_note {{security_notes}}
+                {{/if}}
+            {{/if}}
+            {{#if is_mut}}#[account(mut)]{{/if}}
+            {{#if is_signer}}#[account(signer)]{{/if}}
+            {{#if constraints}}
+                #[account(
+                {{#each constraints}}
+                    {{this}}{{#unless @last}},{{/unless}}
+                {{/each}}
+                )]
+            {{/if}}
+            pub {{name}}: {{#if is_pda}}AccountInfo<'info>{{else}}{{type}}{{/if}},
+        {{/each}}
+
+        // Security: Always verify PDAs manually
+        {{#if pdas}}
+            {{#each pdas}}
+                /// Verifies PDA for {{name}}
+                pub {{name}}_bump: u8,
+            {{/each}}
+        {{/if}}
+        }
+    {{/each}}
+{{/if}}
+
+// ========================================
+// STATE STRUCTS (PDA Data Storage)
+// ========================================
+{{#if states}}
+    {{#each states}}
+        /// {{description}}
+        ///
+        /// @security_note Never change field order after deployment!
+        /// @tested true
+        #[account]
+        #[derive(AnchorSerialize, AnchorDeserialize, Default, InitSpace)]
+        pub struct {{name}} {
+        {{#each fields}}
+            /// {{description}}
+            ///
+            /// @security_note {{#if security_notes}}{{security_notes}}{{else}}Immutable after initialization{{/if}}
+            pub {{name}}: {{type}},
+        {{/each}}
+        }
+    {{/each}}
+{{/if}}
+
+// ========================================
+// HELPER FUNCTIONS (Reusable Logic)
+// ========================================
+{{#if helpers}}
+    {{#each helpers}}
+        /// {{description}}
+        ///
+        /// @security_note {{#if security_notes}}{{security_notes}}{{else}}Safe for public use{{/if}}
+        /// @tested true
+        pub {{visibility}} fn {{name}}(
+        {{#if params}}
+            {{#each params}}
+                /// {{description}}
+                {{name}}: {{type}}{{#unless @last}}, {{/unless}}
+            {{/each}}
+        {{/if}}
+        ) -> {{#if returns}}{{returns}}{{else}}Result<()>{{/if}} {
+        {{#each security_checks}}
+            {{this}}
+        {{/each}}
+
+        {{#each body}}
+            {{this}}
+        {{/each}}
+
+        {{#if returns}}
+            Ok({{returns_value}})
+        {{/if}}
+        }
+    {{/each}}
+{{/if}}
+
+// ========================================
+// CPI HANDLERS (Cross-Program Invocations)
+// ========================================
+{{#if cpi_handlers}}
+    {{#each cpi_handlers}}
+        /// {{description}}
+        ///
+        /// @security_note Validate all CPI targets!
+        /// @tested true
+        pub struct {{name}};
+
+        impl {{name}} {
+        /// Execute CPI call
+        pub fn {{method}}(
+        ctx: Context<{{context}}>,
+        {{#if params}}
+            {{#each params}}
+                {{name}}: {{type}}{{#unless @last}}, {{/unless}}
+            {{/each}}
+        {{/if}}
+        ) -> Result<()> {
+        {{#each body}}
+            {{this}}
+        {{/each}}
+        Ok(())
+        }
+        }
+    {{/each}}
+{{/if}}
+
+// ========================================
+// TESTS (Critical for Production)
+// ========================================
+#[cfg(test)]
+mod tests {
+use super::*;
+use anchor_lang::prelude::Pubkey;
+use solana_program::instruction::Instruction;
+use solana_program_test::*;
+
+{{#if tests}}
+    {{#each tests}}
+        /// {{description}}
+        #[tokio::test]
+        async fn {{name}}() {
+        {{#each setup}}
+            {{this}}
+        {{/each}}
+
+        let result = {{#if instruction}}
+            {{instruction}}(
+            {{#if params}}
+                {{#each params}}
+                    {{name}}{{#unless @last}}, {{/unless}}
+                {{/each}}
+            {{/if}}
+            )
+        {{else}}
+            // TODO: Implement test
+            unimplemented!()
+        {{/if}};
+
+        {{#each assertions}}
+            {{this}}
+        {{/each}}
+        }
+    {{/each}}
+{{else}}
+    ///WARNING: No tests implemented!
+    ///
+    /// @security_critical Always write tests for production code
+    #[tokio::test]
+    #[should_panic]
+    async fn placeholder_test() {
+    panic!("Tests must be implemented!");
+    }
+{{/if}}
+}
