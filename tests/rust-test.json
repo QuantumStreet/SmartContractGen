@@ -1,0 +1,78 @@
+{
+  "imports": [
+    "anchor_lang::prelude::*"
+  ],
+  "programId": "Fg6PaFpoGXkYsidMpWTK6W2BeZ7FEfcYkg476zPFsLnS",
+  "programName": "counter_contract",
+  "constants": [
+    {
+      "name": "START_VALUE",
+      "type": "u64",
+      "value": "0",
+      "description": "Initial value for counter"
+    }
+  ],
+  "instructions": [
+    {
+      "name": "increment",
+      "description": "Increment the counter",
+      "contextStruct": "Increment",
+      "params": [
+        {
+          "name": "step",
+          "type": "u64",
+          "description": "Step for increment"
+        }
+      ],
+      "body": [
+        "let counter = &mut ctx.accounts.counter;",
+        "counter.value = counter.value.checked_add(step).ok_or(ErrorCode::Overflow)?;",
+        "Ok(())"
+      ]
+    }
+  ],
+  "accounts": [
+    {
+      "name": "Increment",
+      "description": "Account for increment instruction",
+      "fields": [
+        {
+          "name": "authority",
+          "type": "Signer<'info>",
+          "description": "Authority that can increment"
+        },
+        {
+          "name": "counter",
+          "type": "Account<'info, Counter>",
+          "description": "Counter account"
+        },
+        {
+          "name": "system_program",
+          "type": "Program<'info, System>",
+          "description": "System program"
+        }
+      ]
+    }
+  ],
+  "dataStructs": [
+    {
+      "name": "Counter",
+      "description": "The main counter struct",
+      "fields": [
+        {
+          "name": "value",
+          "type": "u64",
+          "description": "Value of the counter"
+        }
+      ]
+    }
+  ],
+  "errors": [
+    {
+      "name": "Overflow",
+      "message": "Counter overflow",
+      "code": 6001,
+      "description": "If counter value exceeds u64"
+    }
+  ]
+}

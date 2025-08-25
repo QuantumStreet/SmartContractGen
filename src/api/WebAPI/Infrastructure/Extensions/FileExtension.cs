@@ -6,12 +6,14 @@ public static class FileExtension
     public const string Cpp = ".cpp";
     public const string Rs = ".rs";
     public const string Sol = ".sol";
+    public const string Zip = ".zip";
 
     private static readonly HashSet<string> ContractExtensions = new(StringComparer.OrdinalIgnoreCase)
     {
         Sol,
         Rs,
-        Cpp
+        Cpp, 
+        Zip
     };
 
     public static bool IsJsonFile(this IFormFile file)
