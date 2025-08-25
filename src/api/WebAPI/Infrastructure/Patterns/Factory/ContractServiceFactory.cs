@@ -12,6 +12,7 @@ public class ContractServiceFactory(IServiceProvider serviceProvider) : IContrac
     public IContractCompiler GetCompiler(SmartContractLanguage language) => language switch
     {
         SmartContractLanguage.Solidity => serviceProvider.GetRequiredService<ISolidityContractCompiler>(),
+        SmartContractLanguage.Rust => serviceProvider.GetRequiredService<IRustContractCompiler>(),
         _ => throw new NotSupportedException($"Compiler for language {language} is not supported.")
     };
 
