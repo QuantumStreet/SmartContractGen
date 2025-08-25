@@ -23,7 +23,8 @@ builder.Services.Configure<GzipCompressionProviderOptions>(o => { o.Level = Comp
 
 builder.Services.Configure<EthereumOptions>(
     builder.Configuration.GetSection("Ethereum"));
-
+builder.Services.Configure<SolanaOptions>(
+    builder.Configuration.GetSection("Solana"));
 
 WebApplication app = builder.Build();
 

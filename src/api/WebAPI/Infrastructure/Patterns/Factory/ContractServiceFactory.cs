@@ -19,6 +19,7 @@ public class ContractServiceFactory(IServiceProvider serviceProvider) : IContrac
     public IContractDeployer GetDeployer(SmartContractLanguage language) => language switch
     {
         SmartContractLanguage.Solidity => serviceProvider.GetRequiredService<ISolidityContractDeployer>(),
+        SmartContractLanguage.Rust => serviceProvider.GetRequiredService<IRustContractDeployer>(),
         _ => throw new NotSupportedException($"Deployer for language {language} is not supported.")
     };
 }
