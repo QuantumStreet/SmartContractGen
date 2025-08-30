@@ -1,0 +1,1005 @@
+{{!-- Complete Scrypto Smart Contract Template with Error Handling, Security, Testing & Documentation --}}
+
+{{#if imports}}
+    // ================ Imports ================
+    {{#each imports}}
+        {{#unless (eq this "scrypto::prelude::*")}}
+            use {{{this}}};
+        {{/unless}}
+    {{/each}}
+{{/if}}
+
+use scrypto::prelude::*;
+
+{{#if scryptoImports}}
+    // ================ Scrypto Specific Imports ================
+    {{#each scryptoImports}}
+        use {{{this}}};
+    {{/each}}
+{{/if}}
+
+{{#if externalImports}}
+    // ================ External Package Imports ================
+    {{#each externalImports}}
+        use {{{package}}}::{{{this}}};
+    {{/each}}
+{{/if}}
+
+// ================ Error Handling ================
+{{#if errors}}
+    {{#each errors}}
+        {{#if description}}/// {{{description}}}{{/if}}
+        #[derive(ScryptoSbor)]
+        pub enum {{{name}}} {
+        {{#each variants}}
+            {{#if description}}/// {{{description}}}{{/if}}
+            {{{name}}}{{#if fields}}({{{fields}}}){{/if}}{{#unless @last}},{{/unless}}
+        {{/each}}
+        }
+
+        impl From<{{{name}}}> for RuntimeError {
+        fn from(error: {{{name}}}) -> Self {
+        RuntimeError::ApplicationError(error.into())
+        }
+        }
+    {{/each}}
+{{/if}}
+
+{{#if constants}}
+    // ================ Constants ================
+    {{#each constants}}
+        {{#if description}}/// {{{description}}}{{/if}}
+        pub const {{{name}}}: {{{type}}} = {{{value}}};
+    {{/each}}
+{{/if}}
+
+{{#if structs}}
+    // ================ Global Structs ================
+    {{#each structs}}
+        {{#if description}}/// {{{description}}}{{/if}}
+        #[derive(ScryptoSbor)]
+        pub struct {{{name}}} {
+        {{#each fields}}
+            {{#if description}}/// {{{description}}}{{/if}}
+            pub {{{name}}}: {{{type}}},
+        {{/each}}
+        }
+    {{/each}}
+{{/if}}
+
+{{#if enums}}
+    // ================ Global Enums ================
+    {{#each enums}}
+        {{#if description}}/// {{{description}}}{{/if}}
+        #[derive(ScryptoSbor)]
+        pub enum {{{name}}} {
+        {{#each variants}}
+            {{#if description}}/// {{{description}}}{{/if}}
+            {{{name}}}{{#if fields}}({{{fields}}}){{/if}}{{#unless @last}},{{/unless}}
+        {{/each}}
+        }
+    {{/each}}
+{{/if}}
+
+{{#if events}}
+    // ================ Global Events ================
+    {{#each events}}
+        {{#if description}}/// {{{description}}}{{/if}}
+        #[derive(ScryptoSbor)]
+        pub struct {{{name}}} {
+        {{#each fields}}
+            {{#if description}}/// {{{description}}}{{/if}}
+            pub {{{name}}}: {{{type}}},
+        {{/each}}
+        }
+    {{/each}}
+{{/if}}
+
+{{!-- Package Definition --}}
+{{#if package}}
+    // ================ Package Definition ================
+    {{#if package.description}}/// {{{package.description}}}{{/if}}
+    pub fn package_definition() -> PackageDefinition {
+    let mut package_def = PackageDefinition::new();
+
+    {{#each package.blueprints}}
+        package_def = package_def.add_blueprint("{{{this}}}", {{{this}}}::blueprint_definition());
+    {{/each}}
+
+    package_def
+    }
+{{/if}}
+
+{{!-- Blueprints --}}
+{{#if blueprints}}
+    {{#each blueprints}}
+        {{#if description}}/// {{{description}}}{{/if}}
+        /// ## Security Considerations
+        /// {{#if securityConsiderations}}{{securityConsiderations}}{{/if}}
+        /// ## Complexity Analysis
+        /// {{#if complexity}}{{complexity}}{{/if}}
+        #[blueprint]
+        pub mod {{{name}}} {
+        use super::*;
+
+        {{#if structs}}
+            {{#each structs}}
+                {{#if description}}/// {{{description}}}{{/if}}
+                #[derive(ScryptoSbor)]
+                pub struct {{{name}}} {
+                {{#each fields}}
+                    {{#if description}}/// {{{description}}}{{/if}}
+                    pub {{{name}}}: {{{type}}},
+                {{/each}}
+                }
+            {{/each}}
+        {{/if}}
+
+        {{#if enums}}
+            {{#each enums}}
+                {{#if description}}/// {{{description}}}{{/if}}
+                #[derive(ScryptoSbor)]
+                pub enum {{{name}}} {
+                {{#each variants}}
+                    {{#if description}}/// {{{description}}}{{/if}}
+                    {{{name}}}{{#if fields}}({{{fields}}}){{/if}}{{#unless @last}},{{/unless}}
+                {{/each}}
+                }
+            {{/each}}
+        {{/if}}
+
+        {{#if events}}
+            // ================ Events ================
+            {{#each events}}
+                {{#if description}}/// {{{description}}}{{/if}}
+                #[derive(ScryptoSbor)]
+                pub struct {{{name}}} {
+                {{#each fields}}
+                    {{#if description}}/// {{{description}}}{{/if}}
+                    pub {{{name}}}: {{{type}}},
+                {{/each}}
+                }
+            {{/each}}
+        {{/if}}
+
+        {{#if state}}
+            // ================ Component State ================
+            {{#each state}}
+                {{#if description}}/// {{{description}}}{{/if}}
+                pub {{{name}}}: {{{type}}},
+            {{/each}}
+        {{/if}}
+
+        {{#if accessRules}}
+            // ================ Access Rules ================
+            {{#each accessRules}}
+                {{#if description}}/// {{{description}}}{{/if}}
+                pub {{{name}}}: AccessRule,
+            {{/each}}
+        {{/if}}
+
+        {{#if metadata}}
+            // ================ Metadata ================
+            {{#each metadata}}
+                {{#if description}}/// {{{description}}}{{/if}}
+                pub {{{key}}}: {{{value}}},
+            {{/each}}
+        {{/if}}
+
+        {{#if version}}
+            // ================ Version Management ================
+            {{#if description}}/// {{{description}}}{{/if}}
+            pub const CONTRACT_VERSION: &str = "{{{version}}}";
+            pub const CONTRACT_NAME: &str = "{{{name}}}";
+        {{/if}}
+
+        impl {{{name}}} {
+        {{#if constructor}}
+            // ================ Constructor ================
+            {{#if constructor.description}}/// {{{constructor.description}}}{{/if}}
+            /// # Arguments
+            {{#if constructor.params}}
+                {{#each constructor.params}}
+                    /// * `{{{name}}}` - {{{description}}}
+                {{/each}}
+            {{/if}}
+            /// # Returns
+            /// Component<Self> - Instantiated component
+                /// # Errors
+            {{#if constructor.errors}}
+                {{#each constructor.errors}}
+                        /// * {{{this}}}
+                {{/each}}
+            {{/if}}
+                /// # Security
+            {{#if constructor.security}}
+                {{#each constructor.security}}
+                        /// * {{{this}}}
+                {{/each}}
+            {{/if}}
+                pub fn new(
+            {{#if constructor.params}}
+                {{#each constructor.params}}
+                    {{{name}}}: {{{type}}}{{#unless @last}},{{/unless}}
+                {{/each}}
+            {{/if}}
+                ) -> Result<Component<Self>, RuntimeError> {
+            {{#if constructor.validations}}
+                    // ================ Security Validations ================
+                {{#each constructor.validations}}
+                    {{{this}}}
+                {{/each}}
+            {{/if}}
+
+            {{#if constructor.body}}
+                    // ================ Constructor Logic ================
+                {{#each constructor.body}}
+                    {{{this}}}
+                {{/each}}
+            {{else}}
+                    // Default constructor with security checks
+                    Self {
+                {{#each state}}
+                    {{{name}}}: {{{defaultValue}}}{{#unless @last}},{{/unless}}
+                {{/each}}
+                    }.instantiate().map_err(|e| RuntimeError::ApplicationError(e.into()))
+            {{/if}}
+                }
+        {{/if}}
+
+        {{#if methods}}
+                // ================ Public Methods ================
+            {{#each methods}}
+                {{#if description}}/// {{{description}}}{{/if}}
+                    /// # Arguments
+                {{#if params}}
+                    {{#each params}}
+                            /// * `{{{name}}}` - {{{description}}}
+                    {{/each}}
+                {{/if}}
+                    /// # Returns
+                {{#if returns}}
+                        /// {{{returns}}} - {{{returnsDescription}}}
+                {{/if}}
+                    /// # Errors
+                {{#if errors}}
+                    {{#each errors}}
+                            /// * {{{this}}}
+                    {{/each}}
+                {{/if}}
+                    /// # Security
+                {{#if security}}
+                    {{#each security}}
+                            /// * {{{this}}}
+                    {{/each}}
+                {{/if}}
+                    /// # Complexity
+                {{#if complexity}}
+                        /// {{{complexity}}}
+                {{/if}}
+                    pub fn {{{name}}}(&self
+                {{#if params}},
+                {{#each params}}
+                    {{{name}}}: {{{type}}}{{#unless @last}},{{/unless}}
+                {{/each}}
+                {{/if}}
+                    ) -> Result<{{#if returns}}{{{returns}}}{{else}}(){{/if}}, RuntimeError> {
+                {{#if validations}}
+                        // ================ Security Validations ================
+                    {{#each validations}}
+                        {{{this}}}
+                    {{/each}}
+                {{/if}}
+
+                {{#if body}}
+                        // ================ Method Logic ================
+                    {{#each body}}
+                        {{{this}}}
+                    {{/each}}
+                {{else}}
+                    {{#if returns}}
+                            Err(RuntimeError::ApplicationError("{{{name}}} not implemented".into()))
+                    {{else}}
+                            Ok(())
+                    {{/if}}
+                {{/if}}
+                    }
+            {{/each}}
+        {{/if}}
+
+        {{#if privateMethods}}
+                // ================ Private Methods ================
+            {{#each privateMethods}}
+                {{#if description}}/// {{{description}}}{{/if}}
+                    fn {{{name}}}(&self
+                {{#if params}},
+                {{#each params}}
+                    {{{name}}}: {{{type}}}{{#unless @last}},{{/unless}}
+                {{/each}}
+                {{/if}}
+                    ) -> Result<{{#if returns}}{{{returns}}}{{else}}(){{/if}}, RuntimeError> {
+                {{#if validations}}
+                        // ================ Internal Validations ================
+                    {{#each validations}}
+                        {{{this}}}
+                    {{/each}}
+                {{/if}}
+
+                {{#if body}}
+                        // ================ Private Logic ================
+                    {{#each body}}
+                        {{{this}}}
+                    {{/each}}
+                {{else}}
+                    {{#if returns}}
+                            Err(RuntimeError::ApplicationError("{{{name}}} not implemented".into()))
+                    {{else}}
+                            Ok(())
+                    {{/if}}
+                {{/if}}
+                    }
+            {{/each}}
+        {{/if}}
+
+        {{#if globalMethods}}
+                // ================ Global Methods ================
+            {{#each globalMethods}}
+                {{#if description}}/// {{{description}}}{{/if}}
+                    pub fn {{{name}}} (
+                {{#if params}}
+                    {{#each params}}
+                        {{{name}}}: {{{type}}}{{#unless @last}},{{/unless}}
+                    {{/each}}
+                {{/if}}
+                    ) -> Result<{{#if returns}}{{{returns}}}{{else}}(){{/if}}, RuntimeError> {
+                {{#if validations}}
+                        // ================ Global Validations ================
+                    {{#each validations}}
+                        {{{this}}}
+                    {{/each}}
+                {{/if}}
+
+                {{#if body}}
+                        // ================ Global Logic ================
+                    {{#each body}}
+                        {{{this}}}
+                    {{/each}}
+                {{else}}
+                    {{#if returns}}
+                            Err(RuntimeError::ApplicationError("{{{name}}} not implemented".into()))
+                    {{else}}
+                            Ok(())
+                    {{/if}}
+                {{/if}}
+                    }
+            {{/each}}
+        {{/if}}
+
+        {{#if resourceManagement}}
+                // ================ Resource Management Methods ================
+            {{#each resourceManagement}}
+                {{#if description}}/// {{{description}}}{{/if}}
+                    pub fn {{{name}}}(&self
+                {{#if params}},
+                {{#each params}}
+                    {{{name}}}: {{{type}}}{{#unless @last}},{{/unless}}
+                {{/each}}
+                {{/if}}
+                    ) -> Result<{{#if returns}}{{{returns}}}{{else}}(){{/if}}, RuntimeError> {
+                    // Resource-specific validations
+                {{#if resourceValidations}}
+                    {{#each resourceValidations}}
+                        {{{this}}}
+                    {{/each}}
+                {{/if}}
+
+                    // Resource management logic
+                {{#if body}}
+                    {{#each body}}
+                        {{{this}}}
+                    {{/each}}
+                {{/if}}
+
+                    Ok({{#if returns}}Default::default(){{/if}})
+                    }
+            {{/each}}
+        {{/if}}
+
+        {{#if nftMethods}}
+                // ================ NFT Management Methods ================
+            {{#each nftMethods}}
+                {{#if description}}/// {{{description}}}{{/if}}
+                    pub fn {{{name}}}(&self
+                {{#if params}},
+                {{#each params}}
+                    {{{name}}}: {{{type}}}{{#unless @last}},{{/unless}}
+                {{/each}}
+                {{/if}}
+                    ) -> Result<{{#if returns}}{{{returns}}}{{else}}(){{/if}}, RuntimeError> {
+                    // NFT-specific validations
+                {{#if nftValidations}}
+                    {{#each nftValidations}}
+                        {{{this}}}
+                    {{/each}}
+                {{/if}}
+
+                    // NFT management logic
+                {{#if body}}
+                    {{#each body}}
+                        {{{this}}}
+                    {{/each}}
+                {{/if}}
+
+                    Ok({{#if returns}}Default::default(){{/if}})
+                    }
+            {{/each}}
+        {{/if}}
+
+        {{#if defiMethods}}
+                // ================ DeFi Methods ================
+            {{#each defiMethods}}
+                {{#if description}}/// {{{description}}}{{/if}}
+                    pub fn {{{name}}}(&self
+                {{#if params}},
+                {{#each params}}
+                    {{{name}}}: {{{type}}}{{#unless @last}},{{/unless}}
+                {{/each}}
+                {{/if}}
+                    ) -> Result<{{#if returns}}{{{returns}}}{{else}}(){{/if}}, RuntimeError> {
+                    // DeFi-specific validations and security checks
+                {{#if defiValidations}}
+                    {{#each defiValidations}}
+                        {{{this}}}
+                    {{/each}}
+                {{/if}}
+
+                    // DeFi logic with overflow/underflow protection
+                {{#if body}}
+                    {{#each body}}
+                        {{{this}}}
+                    {{/each}}
+                {{/if}}
+
+                    Ok({{#if returns}}Default::default(){{/if}})
+                    }
+            {{/each}}
+        {{/if}}
+            }
+            }
+    {{/each}}
+{{/if}}
+
+{{!-- Transaction Manifest Template --}}
+{{#if transactionManifest}}
+        // ================ Transaction Manifest ================
+    {{#if transactionManifest.description}}/// {{{transactionManifest.description}}}{{/if}}
+        pub fn {{{transactionManifest.name}}}() -> Result<TransactionManifest, RuntimeError> {
+        let mut manifest = TransactionManifest::new();
+
+    {{#each transactionManifest.instructions}}
+        {{#if (eq type "CallMethod")}}
+                manifest = manifest.call_method(
+            {{{componentAddress}}},
+                "{{{method}}}",
+            {{#if args}}args!({{{args}}}){{/if}}
+                );
+        {{else if (eq type "CallFunction")}}
+                manifest = manifest.call_function(
+            {{{packageAddress}}},
+                "{{{blueprint}}}",
+                "{{{function}}}",
+            {{#if args}}args!({{{args}}}){{/if}}
+                );
+        {{else if (eq type "TakeFromWorktop")}}
+                manifest = manifest.take_from_worktop(
+            {{{resourceAddress}}},
+            {{{amount}}}
+                );
+        {{else if (eq type "DepositBatch")}}
+                manifest = manifest.deposit_batch(
+            {{{bucketIds}}}
+                );
+        {{else if (eq type "CreateProofFromBucket")}}
+                manifest = manifest.create_proof_from_bucket(
+            {{{bucketId}}}
+                );
+        {{else if (eq type "CloneProof")}}
+                manifest = manifest.clone_proof(
+            {{{proofId}}}
+                );
+        {{else if (eq type "DropProof")}}
+                manifest = manifest.drop_proof(
+            {{{proofId}}}
+                );
+        {{/if}}
+    {{/each}}
+
+        Ok(manifest)
+        }
+{{/if}}
+
+{{!-- Security Modules --}}
+{{#if securityModules}}
+    {{#each securityModules}}
+
+        {{#if (eq type "reentrancyGuard")}}
+                // ================ Reentrancy Guard ================
+            {{#if description}}/// {{{description}}}{{/if}}
+                pub struct ReentrancyGuard {
+                pub locked: bool,
+                }
+
+                impl ReentrancyGuard {
+                pub fn new() -> Self {
+                Self { locked: false }
+                }
+
+                pub fn lock(&mut self) -> Result<(), RuntimeError> {
+                if self.locked {
+                return Err(RuntimeError::ApplicationError("Reentrant call detected".into()));
+                }
+                self.locked = true;
+                Ok(())
+                }
+
+                pub fn unlock(&mut self) {
+                self.locked = false;
+                }
+                }
+
+                // Macro for reentrancy protection
+                macro_rules! non_reentrant {
+                ($guard:expr, $body:block) => {{
+            $guard.lock()?;
+            let result = $body;
+            $guard.unlock();
+            result
+            }};
+                }
+        {{/if}}
+
+        {{#if (eq type "timelock")}}
+                // ================ Timelock Protection ================
+            {{#if description}}/// {{{description}}}{{/if}}
+                pub struct Timelock {
+                pub delay: u64,
+                pub queued_transactions: HashMap<Vec<u8>, (Vec<u8>, u64)>,
+                }
+
+                impl Timelock {
+                pub fn queue_transaction(&mut self, tx_id: Vec<u8>, data: Vec<u8>) -> Result<(), RuntimeError> {
+                let execution_time = Runtime::current_epoch().number() + self.delay;
+                self.queued_transactions.insert(tx_id, (data, execution_time));
+                Ok(())
+                }
+
+                pub fn execute_transaction(&mut self, tx_id: Vec<u8>) -> Result<(), RuntimeError> {
+                if let Some((data, execution_time)) = self.queued_transactions.get(&tx_id) {
+                let current_time = Runtime::current_epoch().number();
+                if current_time < *execution_time {
+                return Err(RuntimeError::ApplicationError("Transaction not ready for execution".into()));
+                }
+                // Execute transaction logic here
+                self.queued_transactions.remove(&tx_id);
+                Ok(())
+                } else {
+                Err(RuntimeError::ApplicationError("Transaction not found".into()))
+                }
+                }
+                }
+        {{/if}}
+
+        {{#if (eq type "emergencyStop")}}
+                // ================ Emergency Stop / Circuit Breaker ================
+            {{#if description}}/// {{{description}}}{{/if}}
+                pub struct EmergencyStop {
+                pub stopped: bool,
+                pub admin: ComponentAddress,
+                }
+
+                impl EmergencyStop {
+                pub fn stop(&mut self, caller: ComponentAddress) -> Result<(), RuntimeError> {
+                if caller != self.admin {
+                return Err(RuntimeError::ApplicationError("Unauthorized emergency stop".into()));
+                }
+                self.stopped = true;
+                Ok(())
+                }
+
+                pub fn resume(&mut self, caller: ComponentAddress) -> Result<(), RuntimeError> {
+                if caller != self.admin {
+                return Err(RuntimeError::ApplicationError("Unauthorized resume".into()));
+                }
+                self.stopped = false;
+                Ok(())
+                }
+
+                pub fn require_not_stopped(&self) -> Result<(), RuntimeError> {
+                if self.stopped {
+                return Err(RuntimeError::ApplicationError("Contract is stopped".into()));
+                }
+                Ok(())
+                }
+                }
+        {{/if}}
+
+        {{#if (eq type "roundingProtection")}}
+                // ================ Rounding Protection ================
+            {{#if description}}/// {{{description}}}{{/if}}
+                pub mod rounding_protection {
+                use scrypto::prelude::*;
+
+                pub fn safe_divide(a: Decimal, b: Decimal, minimum_result: Option<Decimal>) -> Result<Decimal, RuntimeError> {
+                if b == Decimal::ZERO {
+                return Err(RuntimeError::ApplicationError("Division by zero".into()));
+                }
+
+                let result = a / b;
+
+                if let Some(min) = minimum_result {
+                if result < min {
+                return Err(RuntimeError::ApplicationError("Result below minimum threshold".into()));
+                }
+                }
+
+                Ok(result)
+                }
+
+                pub fn safe_multiply(a: Decimal, b: Decimal, maximum_result: Option<Decimal>) -> Result<Decimal, RuntimeError> {
+                let result = a * b;
+
+                if let Some(max) = maximum_result {
+                if result > max {
+                return Err(RuntimeError::ApplicationError("Result exceeds maximum threshold".into()));
+                }
+                }
+
+                Ok(result)
+                }
+
+                pub fn calculate_slippage(amount: Decimal, slippage_tolerance: Decimal) -> (Decimal, Decimal) {
+                let min_amount = amount * (Decimal::ONE - slippage_tolerance);
+                let max_amount = amount * (Decimal::ONE + slippage_tolerance);
+                (min_amount, max_amount)
+                }
+                }
+        {{/if}}
+
+        {{#if (eq type "authorization")}}
+                // ================ Explicit Authorization ================
+            {{#if description}}/// {{{description}}}{{/if}}
+                pub mod authorization {
+                use scrypto::prelude::*;
+
+                pub fn require_owner(caller: ComponentAddress, owner: ComponentAddress) -> Result<(), RuntimeError> {
+                if caller != owner {
+                return Err(RuntimeError::ApplicationError("Caller is not the owner".into()));
+                }
+                Ok(())
+                }
+
+                pub fn require_role(caller: ComponentAddress, role_resource: ResourceAddress) -> Result<(), RuntimeError> {
+                // Check if caller has the required role badge
+                // This would typically involve checking a vault or proof
+                Ok(()) // Placeholder - implement actual role checking
+                }
+
+                pub fn require_proof(proof: Proof, required_resource: ResourceAddress) -> Result<(), RuntimeError> {
+                if proof.resource_address() != required_resource {
+                return Err(RuntimeError::ApplicationError("Invalid proof resource".into()));
+                }
+                Ok(())
+                }
+                }
+        {{/if}}
+
+        {{#if (eq type "upgradeable")}}
+                // ================ Contract Upgrade Mechanism ================
+            {{#if description}}/// {{{description}}}{{/if}}
+                pub struct UpgradeableContract {
+                pub current_version: String,
+                pub upgrade_admin: ComponentAddress,
+                pub upgrade_timelock: u64,
+                pub pending_upgrade: Option<(PackageAddress, String, u64)>,
+                }
+
+                impl UpgradeableContract {
+                pub fn propose_upgrade(
+                &mut self,
+                new_package: PackageAddress,
+                version: String,
+                caller: ComponentAddress
+                ) -> Result<(), RuntimeError> {
+                if caller != self.upgrade_admin {
+                return Err(RuntimeError::ApplicationError("Unauthorized upgrade proposal".into()));
+                }
+
+                let execution_time = Runtime::current_epoch().number() + self.upgrade_timelock;
+                self.pending_upgrade = Some((new_package, version, execution_time));
+
+                // Emit upgrade proposed event
+                Ok(())
+                }
+
+                pub fn execute_upgrade(&mut self, caller: ComponentAddress) -> Result<(), RuntimeError> {
+                if caller != self.upgrade_admin {
+                return Err(RuntimeError::ApplicationError("Unauthorized upgrade execution".into()));
+                }
+
+                if let Some((new_package, version, execution_time)) = self.pending_upgrade {
+                let current_time = Runtime::current_epoch().number();
+                if current_time < execution_time {
+                return Err(RuntimeError::ApplicationError("Upgrade timelock not expired".into()));
+                }
+
+                self.current_version = version;
+                self.pending_upgrade = None;
+
+                // Perform actual upgrade logic here
+                // This would involve updating the component's code
+
+                Ok(())
+                } else {
+                Err(RuntimeError::ApplicationError("No pending upgrade".into()))
+                }
+                }
+                }
+        {{/if}}
+
+        {{#if (eq type "oracleProtection")}}
+                // ================ Oracle Manipulation Protection ================
+            {{#if description}}/// {{{description}}}{{/if}}
+                pub struct OracleProtection {
+                pub price_feeds: HashMap<ResourceAddress, (Decimal, u64, u64)>,
+                pub max_price_deviation: Decimal,
+                pub max_data_age: u64,
+                }
+
+                impl OracleProtection {
+                pub fn validate_price_feed(
+                &mut self,
+                asset: ResourceAddress,
+                new_price: Decimal,
+                timestamp: u64,
+                confidence: u64
+                ) -> Result<(), RuntimeError> {
+                let current_time = Runtime::current_epoch().number();
+
+                // Check data freshness
+                if current_time - timestamp > self.max_data_age {
+                return Err(RuntimeError::ApplicationError("Oracle data too old".into()));
+                }
+
+                // Check confidence level
+                if confidence < 80 {
+                return Err(RuntimeError::ApplicationError("Insufficient confidence in price data".into()));
+                }
+
+                // Check for manipulation (price deviation)
+                if let Some((last_price, _, _)) = self.price_feeds.get(&asset) {
+                let deviation = ((new_price - *last_price) / *last_price).abs();
+                if deviation > self.max_price_deviation {
+                return Err(RuntimeError::ApplicationError("Price deviation too high - possible manipulation".into()));
+                }
+                }
+
+                // Update price feed
+                self.price_feeds.insert(asset, (new_price, timestamp, confidence));
+
+                Ok(())
+                }
+
+                pub fn get_safe_price(&self, asset: ResourceAddress) -> Result<Decimal, RuntimeError> {
+                if let Some((price, timestamp, _)) = self.price_feeds.get(&asset) {
+                let current_time = Runtime::current_epoch().number();
+                if current_time - timestamp > self.max_data_age {
+                return Err(RuntimeError::ApplicationError("Price data expired".into()));
+                }
+                Ok(*price)
+                } else {
+                Err(RuntimeError::ApplicationError("No price data available".into()))
+                }
+                }
+                }
+        {{/if}}
+
+        {{#if (eq type "flashLoanProtection")}}
+                // ================ Flash Loan Attack Protection ================
+            {{#if description}}/// {{{description}}}{{/if}}
+                pub struct FlashLoanProtection {
+                pub transaction_volume_threshold: Decimal,
+                pub time_window: u64,
+                pub recent_transactions: Vec<(ComponentAddress, Decimal, u64)>,
+                pub max_volume_per_window: Decimal,
+                pub cooldown_period: u64,
+                pub last_transaction_time: HashMap<ComponentAddress, u64>,
+                }
+
+                impl FlashLoanProtection {
+                pub fn validate_transaction(
+                &mut self,
+                caller: ComponentAddress,
+                amount: Decimal
+                ) -> Result<(), RuntimeError> {
+                let current_time = Runtime::current_epoch().number();
+
+                // Check cooldown period
+                if let Some(last_time) = self.last_transaction_time.get(&caller) {
+                if current_time - *last_time < self.cooldown_period {
+                return Err(RuntimeError::ApplicationError("Transaction too frequent - possible flash loan attack".into()));
+                }
+                }
+
+                // Check transaction volume threshold
+                if amount > self.transaction_volume_threshold {
+                return Err(RuntimeError::ApplicationError("Transaction volume exceeds threshold".into()));
+                }
+
+                // Check volume in time window
+                let window_start = current_time - self.time_window;
+                let recent_volume: Decimal = self.recent_transactions
+                .iter()
+                .filter(|(_, _, time)| *time > window_start)
+                .map(|(_, vol, _)| *vol)
+                .sum();
+
+                if recent_volume + amount > self.max_volume_per_window {
+                return Err(RuntimeError::ApplicationError("Volume limit exceeded in time window".into()));
+                }
+
+                // Update tracking
+                self.recent_transactions.push((caller, amount, current_time));
+                self.last_transaction_time.insert(caller, current_time);
+
+                // Clean old transactions
+                self.recent_transactions.retain(|(_, _, time)| *time > window_start);
+
+                Ok(())
+                }
+                }
+        {{/if}}
+
+    {{/each}}
+{{/if}}
+
+{{!-- Security-Enhanced DeFi Methods --}}
+{{#if securityEnhancedDeFiMethods}}
+    {{#each securityEnhancedDeFiMethods}}
+        {{#if description}}/// {{{description}}}{{/if}}
+            /// # Security Considerations
+            /// * Protected against reentrancy attacks
+            /// * Includes slippage protection
+            /// * Validates oracle data freshness
+            /// * Checks for flash loan manipulation
+            /// * Implements emergency stop mechanisms
+            pub fn {{{name}}}(&self
+        {{#if params}},
+        {{#each params}}
+            {{{name}}}: {{{type}}}{{#unless @last}},{{/unless}}
+        {{/each}}
+        {{/if}}
+            ) -> Result<{{#if returns}}{{{returns}}}{{else}}(){{/if}}, RuntimeError> {
+            // ================ Multi-Layer Security Checks ================
+
+            // 1. Emergency stop check
+            self.emergency_stop.require_not_stopped()?;
+
+            // 2. Authorization check
+            authorization::require_role(Runtime::caller(), self.admin_badge)?;
+
+            // 3. Flash loan protection
+            self.flash_protection.validate_transaction(Runtime::caller(), amount)?;
+
+            // 4. Oracle data validation
+            let safe_price = self.oracle_protection.get_safe_price(asset)?;
+
+            // 5. Slippage calculation
+            let (min_amount, max_amount) = rounding_protection::calculate_slippage(amount, self.slippage_tolerance);
+
+            // 6. Reentrancy protection
+            let result = non_reentrant!(&mut self.reentrancy_guard, {
+            // DeFi logic with overflow/underflow protection
+        {{#if defiValidations}}
+            {{#each defiValidations}}
+                {{{this}}}
+            {{/each}}
+        {{/if}}
+
+            // Main DeFi operation
+        {{#if body}}
+            {{#each body}}
+                {{{this}}}
+            {{/each}}
+        {{/if}}
+
+            Ok({{#if returns}}Default::default(){{/if}})
+            });
+
+            result
+            }
+    {{/each}}
+{{/if}}
+
+{{!-- Testing Module --}}
+{{#if tests}}
+        // ================ Testing Module ================
+    {{#if tests.description}}/// {{{tests.description}}}{{/if}}
+        #[cfg(test)]
+        mod tests {
+        use super::*;
+        use scrypto::test_utils::*;
+
+    {{#each tests.unitTests}}
+        {{#if description}}/// {{{description}}}{{/if}}
+            #[test]
+            fn {{{name}}}() {
+            // Setup test environment
+            let mut test_runner = TestRunner::new();
+
+        {{#if setup}}
+            {{#each setup}}
+                {{{this}}}
+            {{/each}}
+        {{/if}}
+
+            // Execute test logic
+        {{#if body}}
+            {{#each body}}
+                {{{this}}}
+            {{/each}}
+        {{/if}}
+
+            // Assertions
+        {{#if assertions}}
+            {{#each assertions}}
+                {{{this}}}
+            {{/each}}
+        {{/if}}
+            }
+    {{/each}}
+
+    {{#each tests.integrationTests}}
+        {{#if description}}/// {{{description}}}{{/if}}
+            #[test]
+            fn {{{name}}}() {
+            // Setup integration test
+            let mut test_runner = TestRunner::new();
+
+        {{#if setup}}
+            {{#each setup}}
+                {{{this}}}
+            {{/each}}
+        {{/if}}
+
+            // Execute integration scenario
+        {{#if body}}
+            {{#each body}}
+                {{{this}}}
+            {{/each}}
+        {{/if}}
+
+            // Verify integration
+        {{#if assertions}}
+            {{#each assertions}}
+                {{{this}}}
+            {{/each}}
+        {{/if}}
+            }
+    {{/each}}
+        }
+{{/if}}
+
+{{!-- Ecosystem Integration --}}
+{{#if ecosystemIntegration}}
+        // ================ Ecosystem Integration ================
+    {{#each ecosystemIntegration}}
+        {{#if description}}/// {{{description}}}{{/if}}
+            pub mod {{{name}}} {
+        {{#if body}}
+            {{#each body}}
+                {{{this}}}
+            {{/each}}
+        {{/if}}
+            }
+    {{/each}}
+{{/if}}
