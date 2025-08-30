@@ -25,6 +25,7 @@ global using WebAPI.Infrastructure.Extensions.DI;
 global using WebAPI.Infrastructure.DTOs.Responses;
 global using System.ComponentModel.DataAnnotations;
 global using WebAPI.Infrastructure.Controllers.Base;
+global using WebAPI.Infrastructure.Services.Scrypto;
 global using WebAPI.Infrastructure.Patterns.Factory;
 global using WebAPI.Infrastructure.Services.Solidity;
 global using Microsoft.AspNetCore.ResponseCompression;

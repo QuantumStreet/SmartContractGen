@@ -4,5 +4,5 @@ public enum SmartContractLanguage
 {
     Solidity,
     Rust,
-    //Cpp
+    Scrypto,
 }

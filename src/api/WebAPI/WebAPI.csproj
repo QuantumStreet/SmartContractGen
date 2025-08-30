@@ -19,4 +19,10 @@
     <PackageReference Include="Swashbuckle.AspNetCore.Annotations" Version="9.0.3" />
   </ItemGroup>
 
+  <ItemGroup>
+    <_ContentIncludedByDefault Remove="Infrastructure\ProjectTemplates\rust-main-template\package.json" />
+    <_ContentIncludedByDefault Remove="Infrastructure\ProjectTemplates\rust-main-template\target\deploy\rust_main_template-keypair.json" />
+    <_ContentIncludedByDefault Remove="Infrastructure\ProjectTemplates\rust-main-template\tsconfig.json" />
+  </ItemGroup>
+
 </Project>
