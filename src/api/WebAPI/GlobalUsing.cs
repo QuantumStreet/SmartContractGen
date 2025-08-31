@@ -15,6 +15,7 @@ global using System.Collections.Generic;
 global using WebAPI.Infrastructure.Enums;
 global using Microsoft.Extensions.Options;
 global using WebAPI.Infrastructure.Options;
+global using System.Runtime.InteropServices;
 global using System.Text.RegularExpressions;
 global using System.Text.Json.Serialization;
 global using Microsoft.AspNetCore.Diagnostics;

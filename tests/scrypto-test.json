@@ -1,0 +1,266 @@
+{
+  "name": "simple_counter",
+  "description": "A simple counter smart contract that demonstrates basic state management",
+  "blueprints": [
+    {
+      "name": "Counter",
+      "description": "Implements a simple counter with increment, decrement, and reset operations",
+      "securityConsiderations": "This is a simple demonstration contract with minimal security concerns",
+      "complexity": "O(1) for all operations",
+      "version": "1.0.0",
+      "state": [
+        {
+          "name": "count",
+          "type": "u64",
+          "description": "The current counter value",
+          "defaultValue": "0"
+        },
+        {
+          "name": "owner",
+          "type": "ComponentAddress",
+          "description": "The owner of this counter instance",
+          "defaultValue": "ComponentAddress::from_str(\"account_sim1c9q8j72pvqyta5a8hsv2l5q95srs0utu7w226tzp8ckpgavhru7\").unwrap()"
+        }
+      ],
+      "events": [
+        {
+          "name": "CounterUpdated",
+          "description": "Emitted when the counter value changes",
+          "fields": [
+            {
+              "name": "old_value",
+              "type": "u64",
+              "description": "Previous counter value"
+            },
+            {
+              "name": "new_value",
+              "type": "u64",
+              "description": "New counter value"
+            },
+            {
+              "name": "operation",
+              "type": "String",
+              "description": "Operation performed (increment, decrement, reset)"
+            }
+          ]
+        }
+      ],
+      "constructor": {
+        "description": "Creates a new counter instance with initial value",
+        "params": [
+          {
+            "name": "initial_value",
+            "type": "u64",
+            "description": "The initial counter value"
+          }
+        ],
+        "errors": [
+          "None, this constructor cannot fail"
+        ],
+        "security": [
+          "Caller becomes the owner of the counter"
+        ],
+        "body": [
+          "let owner = Runtime::caller();",
+          "Self {",
+          "    count: initial_value,",
+          "    owner: owner",
+          "}.instantiate().map_err(|e| RuntimeError::ApplicationError(e.into()))"
+        ]
+      },
+      "methods": [
+        {
+          "name": "increment",
+          "description": "Increments the counter by a specified amount",
+          "params": [
+            {
+              "name": "amount",
+              "type": "u64",
+              "description": "Amount to increment the counter by"
+            }
+          ],
+          "returns": "u64",
+          "returnsDescription": "The new counter value after incrementing",
+          "errors": [
+            "None, this operation cannot fail"
+          ],
+          "security": [
+            "No authentication required"
+          ],
+          "complexity": "O(1) - constant time operation",
+          "body": [
+            "let old_value = self.count;",
+            "self.count = self.count.checked_add(amount).unwrap_or_else(|| panic!(\"Counter overflow\"));",
+            "Runtime::emit_event(CounterUpdated {",
+            "    old_value,",
+            "    new_value: self.count,",
+            "    operation: \"increment\".to_string()",
+            "});",
+            "Ok(self.count)"
+          ]
+        },
+        {
+          "name": "decrement",
+          "description": "Decrements the counter by a specified amount",
+          "params": [
+            {
+              "name": "amount",
+              "type": "u64",
+              "description": "Amount to decrement the counter by"
+            }
+          ],
+          "returns": "u64",
+          "returnsDescription": "The new counter value after decrementing",
+          "errors": [
+            "RuntimeError if decrementing would cause an underflow"
+          ],
+          "security": [
+            "No authentication required"
+          ],
+          "complexity": "O(1) - constant time operation",
+          "validations": [
+            "if amount > self.count {",
+            "    return Err(RuntimeError::ApplicationError(\"Counter would underflow\".into()));",
+            "}"
+          ],
+          "body": [
+            "let old_value = self.count;",
+            "self.count -= amount;",
+            "Runtime::emit_event(CounterUpdated {",
+            "    old_value,",
+            "    new_value: self.count,",
+            "    operation: \"decrement\".to_string()",
+            "});",
+            "Ok(self.count)"
+          ]
+        },
+        {
+          "name": "reset",
+          "description": "Resets the counter to zero or a specified value",
+          "params": [
+            {
+              "name": "value",
+              "type": "Option<u64>",
+              "description": "Optional value to reset the counter to. If None, resets to zero."
+            }
+          ],
+          "returns": "u64",
+          "returnsDescription": "The new counter value after resetting",
+          "errors": [
+            "RuntimeError if caller is not the owner"
+          ],
+          "security": [
+            "Only the owner can reset the counter"
+          ],
+          "complexity": "O(1) - constant time operation",
+          "validations": [
+            "if Runtime::caller() != self.owner {",
+            "    return Err(RuntimeError::ApplicationError(\"Only the owner can reset the counter\".into()));",
+            "}"
+          ],
+          "body": [
+            "let old_value = self.count;",
+            "self.count = value.unwrap_or(0);",
+            "Runtime::emit_event(CounterUpdated {",
+            "    old_value,",
+            "    new_value: self.count,",
+            "    operation: \"reset\".to_string()",
+            "});",
+            "Ok(self.count)"
+          ]
+        },
+        {
+          "name": "get_count",
+          "description": "Returns the current counter value",
+          "returns": "u64",
+          "returnsDescription": "The current counter value",
+          "complexity": "O(1) - constant time operation",
+          "body": [
+            "Ok(self.count)"
+          ]
+        }
+      ]
+    }
+  ],
+  "tests": {
+    "description": "Tests for the Counter contract",
+    "unitTests": [
+      {
+        "name": "test_initialize",
+        "description": "Tests that the counter can be initialized with a value",
+        "body": [
+          "let (public_key, _, account) = test_runner.new_account();",
+          "let counter_component = test_runner.execute_manifest(ManifestBuilder::new()",
+          "    .call_function(COUNTER_PACKAGE, \"Counter\", \"new\", args![42u64])",
+          "    .build(),",
+          "    vec![&public_key]",
+          ");",
+          "let counter_component = counter_component.expect(\"Error creating counter\");",
+          "let result: u64 = test_runner.execute_manifest(ManifestBuilder::new()",
+          "    .call_method(counter_component, \"get_count\", args![])",
+          "    .build(),",
+          "    vec![&public_key]",
+          ").expect(\"Error calling get_count\");",
+          "assert_eq!(result, 42u64);"
+        ]
+      },
+      {
+        "name": "test_increment",
+        "description": "Tests incrementing the counter",
+        "body": [
+          "let (public_key, _, account) = test_runner.new_account();",
+          "let counter_component = test_runner.execute_manifest(ManifestBuilder::new()",
+          "    .call_function(COUNTER_PACKAGE, \"Counter\", \"new\", args![0u64])",
+          "    .build(),",
+          "    vec![&public_key]",
+          ");",
+          "let counter_component = counter_component.expect(\"Error creating counter\");",
+          "let result: u64 = test_runner.execute_manifest(ManifestBuilder::new()",
+          "    .call_method(counter_component, \"increment\", args![5u64])",
+          "    .build(),",
+          "    vec![&public_key]",
+          ").expect(\"Error incrementing counter\");",
+          "assert_eq!(result, 5u64);"
+        ]
+      },
+      {
+        "name": "test_decrement",
+        "description": "Tests decrementing the counter",
+        "body": [
+          "let (public_key, _, account) = test_runner.new_account();",
+          "let counter_component = test_runner.execute_manifest(ManifestBuilder::new()",
+          "    .call_function(COUNTER_PACKAGE, \"Counter\", \"new\", args![10u64])",
+          "    .build(),",
+          "    vec![&public_key]",
+          ");",
+          "let counter_component = counter_component.expect(\"Error creating counter\");",
+          "let result: u64 = test_runner.execute_manifest(ManifestBuilder::new()",
+          "    .call_method(counter_component, \"decrement\", args![3u64])",
+          "    .build(),",
+          "    vec![&public_key]",
+          ").expect(\"Error decrementing counter\");",
+          "assert_eq!(result, 7u64);"
+        ]
+      },
+      {
+        "name": "test_reset",
+        "description": "Tests resetting the counter",
+        "body": [
+          "let (public_key, _, account) = test_runner.new_account();",
+          "let counter_component = test_runner.execute_manifest(ManifestBuilder::new()",
+          "    .call_function(COUNTER_PACKAGE, \"Counter\", \"new\", args![10u64])",
+          "    .build(),",
+          "    vec![&public_key]",
+          ");",
+          "let counter_component = counter_component.expect(\"Error creating counter\");",
+          "let result: u64 = test_runner.execute_manifest(ManifestBuilder::new()",
+          "    .call_method(counter_component, \"reset\", args![Option::<u64>::None])",
+          "    .build(),",
+          "    vec![&public_key]",
+          ").expect(\"Error resetting counter\");",
+          "assert_eq!(result, 0u64);"
+        ]
+      }
+    ]
+  }
+}
