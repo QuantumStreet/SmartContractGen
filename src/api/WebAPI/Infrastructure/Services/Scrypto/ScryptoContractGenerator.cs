@@ -1,5 +1,3 @@
-using System.Runtime.InteropServices;
-
 namespace WebAPI.Infrastructure.Services.Scrypto;
 
 public class ScryptoContractGenerator : IScryptoContractGenerator
