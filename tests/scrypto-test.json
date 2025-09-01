@@ -1,264 +1,346 @@
 {
-  "name": "simple_counter",
-  "description": "A simple counter smart contract that demonstrates basic state management",
-  "blueprints": [
-    {
-      "name": "Counter",
-      "description": "Implements a simple counter with increment, decrement, and reset operations",
-      "securityConsiderations": "This is a simple demonstration contract with minimal security concerns",
-      "complexity": "O(1) for all operations",
-      "version": "1.0.0",
-      "state": [
-        {
-          "name": "count",
-          "type": "u64",
-          "description": "The current counter value",
-          "defaultValue": "0"
-        },
-        {
-          "name": "owner",
-          "type": "ComponentAddress",
-          "description": "The owner of this counter instance",
-          "defaultValue": "ComponentAddress::from_str(\"account_sim1c9q8j72pvqyta5a8hsv2l5q95srs0utu7w226tzp8ckpgavhru7\").unwrap()"
-        }
-      ],
-      "events": [
-        {
-          "name": "CounterUpdated",
-          "description": "Emitted when the counter value changes",
-          "fields": [
-            {
-              "name": "old_value",
-              "type": "u64",
-              "description": "Previous counter value"
-            },
-            {
-              "name": "new_value",
-              "type": "u64",
-              "description": "New counter value"
-            },
-            {
-              "name": "operation",
-              "type": "String",
-              "description": "Operation performed (increment, decrement, reset)"
-            }
-          ]
-        }
-      ],
-      "constructor": {
-        "description": "Creates a new counter instance with initial value",
-        "params": [
+  "prompt": "Create a decentralized marketplace smart contract in Scrypto for trading digital assets with seller fees, buyer protection, and item listing management",
+  "language": "scrypto",
+  "contractType": "marketplace",
+  "complexity": "intermediate",
+  "features": [
+    "item_listing",
+    "buying_selling",
+    "fee_management",
+    "access_control",
+    "events",
+    "nft_support"
+  ],
+  "templateData": {
+    "imports": [
+      "scrypto::prelude::*",
+      "radix_engine::types::*"
+    ],
+    "constants": [
+      {
+        "name": "MARKETPLACE_FEE_PERCENT",
+        "type": "Decimal",
+        "value": "dec!(\"2.5\")",
+        "description": "Default marketplace fee percentage"
+      },
+      {
+        "name": "MIN_LISTING_PRICE",
+        "type": "Decimal",
+        "value": "dec!(\"1\")",
+        "description": "Minimum price for listing an item"
+      }
+    ],
+    "events": [
+      {
+        "name": "ItemListed",
+        "description": "Event emitted when a new item is listed",
+        "fields": [
+          {"name": "listing_id", "type": "u64", "description": "Unique listing identifier"},
+          {"name": "seller", "type": "ComponentAddress", "description": "Address of the seller"},
+          {"name": "price", "type": "Decimal", "description": "Listed price"},
+          {"name": "resource_address", "type": "ResourceAddress", "description": "Address of the resource being sold"}
+        ]
+      },
+      {
+        "name": "ItemSold",
+        "description": "Event emitted when an item is successfully sold",
+        "fields": [
+          {"name": "listing_id", "type": "u64", "description": "Unique listing identifier"},
+          {"name": "buyer", "type": "ComponentAddress", "description": "Address of the buyer"},
+          {"name": "seller", "type": "ComponentAddress", "description": "Address of the seller"},
+          {"name": "final_price", "type": "Decimal", "description": "Final sale price"}
+        ]
+      }
+    ],
+    "enums": [
+      {
+        "name": "ListingStatus",
+        "description": "Status of a marketplace listing",
+        "variants": [
+          {"name": "Active", "description": "Item is available for purchase"},
+          {"name": "Sold", "description": "Item has been sold"},
+          {"name": "Cancelled", "description": "Listing has been cancelled"}
+        ]
+      }
+    ],
+    "blueprints": [
+      {
+        "name": "marketplace",
+        "features": ["auth", "royalty"],
+        "enableMethodAuth": true,
+        "authRoles": [
+          {"name": "admin", "updatable": true, "updatableBy": ["admin"]},
+          {"name": "seller", "updatable": false}
+        ],
+        "structs": [
           {
-            "name": "initial_value",
-            "type": "u64",
-            "description": "The initial counter value"
+            "name": "Listing",
+            "description": "Represents an item listing in the marketplace",
+            "derives": ["ScryptoSbor", "Clone", "Debug"],
+            "fields": [
+              {"name": "id", "type": "u64", "description": "Unique listing identifier"},
+              {"name": "seller", "type": "ComponentAddress", "description": "Address of the seller"},
+              {"name": "resource_address", "type": "ResourceAddress", "description": "Address of the resource being sold"},
+              {"name": "amount", "type": "Decimal", "description": "Amount of resource being sold"},
+              {"name": "price_per_unit", "type": "Decimal", "description": "Price per unit of resource"},
+              {"name": "total_price", "type": "Decimal", "description": "Total price for the listing"},
+              {"name": "status", "type": "ListingStatus", "description": "Current status of the listing"},
+              {"name": "created_at", "type": "u64", "description": "Timestamp when listing was created"}
+            ]
           }
         ],
-        "errors": [
-          "None, this constructor cannot fail"
+        "state": [
+          {"name": "admin_badge", "type": "Vault", "description": "Admin badge for marketplace management", "defaultValue": "Vault::new(admin_badge_resource)"},
+          {"name": "fee_vault", "type": "Vault", "description": "Vault to collect marketplace fees", "defaultValue": "Vault::new(XRD)"},
+          {"name": "listings", "type": "KeyValueStore<u64, Listing>", "description": "Store of all listings", "defaultValue": "KeyValueStore::new()"},
+          {"name": "listing_counter", "type": "u64", "description": "Counter for generating unique listing IDs", "defaultValue": "0"},
+          {"name": "marketplace_fee", "type": "Decimal", "description": "Current marketplace fee percentage", "defaultValue": "MARKETPLACE_FEE_PERCENT"}
         ],
-        "security": [
-          "Caller becomes the owner of the counter"
+        "constructor": {
+          "description": "Creates a new marketplace instance",
+          "params": [
+            {"name": "initial_fee", "type": "Decimal", "description": "Initial marketplace fee percentage"}
+          ],
+          "validations": [
+            "assert!(initial_fee >= Decimal::zero() && initial_fee <= dec!(\"10\"), \"Fee must be between 0% and 10%\");"
+          ],
+          "resourceCreations": [
+            "let admin_badge_resource = ResourceBuilder::new_fungible(OwnerRole::None)",
+            "    .divisibility(DIVISIBILITY_NONE)",
+            "    .metadata(metadata!(init {",
+            "        \"name\" => \"Marketplace Admin Badge\", locked;",
+            "        \"description\" => \"Badge for marketplace administration\", locked;",
+            "    }))",
+            "    .mint_initial_supply(1);"
+          ],
+          "body": [
+            "Self {",
+            "    admin_badge: Vault::with_bucket(admin_badge_resource),",
+            "    fee_vault: Vault::new(XRD),",
+            "    listings: KeyValueStore::new(),",
+            "    listing_counter: 0,",
+            "    marketplace_fee: initial_fee",
+            "}",
+            ".instantiate()",
+            ".prepare_to_globalize(OwnerRole::None)",
+            ".globalize()"
+          ]
+        },
+        "methods": [
+          {
+            "name": "create_listing",
+            "description": "Creates a new item listing in the marketplace",
+            "authRule": "PUBLIC",
+            "params": [
+              {"name": "resource_bucket", "type": "Bucket", "description": "Bucket containing the resource to sell"},
+              {"name": "price_per_unit", "type": "Decimal", "description": "Price per unit of the resource"}
+            ],
+            "returns": "u64",
+            "validations": [
+              "assert!(price_per_unit >= MIN_LISTING_PRICE, \"Price must be at least {} XRD\", MIN_LISTING_PRICE);",
+              "assert!(!resource_bucket.is_empty(), \"Cannot list empty bucket\");"
+            ],
+            "body": [
+              "let resource_address = resource_bucket.resource_address();",
+              "let amount = resource_bucket.amount();",
+              "let total_price = price_per_unit * amount;",
+              "",
+              "self.listing_counter += 1;",
+              "let listing_id = self.listing_counter;",
+              "",
+              "let listing = Listing {",
+              "    id: listing_id,",
+              "    seller: Runtime::global_caller(),",
+              "    resource_address,",
+              "    amount,",
+              "    price_per_unit,",
+              "    total_price,",
+              "    status: ListingStatus::Active,",
+              "    created_at: Runtime::current_epoch()",
+              "};",
+              "",
+              "self.listings.insert(listing_id, listing);",
+              "",
+              "// Store the resource in a vault",
+              "// In a real implementation, you'd want to store these buckets",
+              "",
+              "Runtime::emit_event(ItemListed {",
+              "    listing_id,",
+              "    seller: Runtime::global_caller(),",
+              "    price: total_price,",
+              "    resource_address",
+              "});",
+              "",
+              "listing_id"
+            ]
+          },
+          {
+            "name": "purchase_item",
+            "description": "Purchases an item from the marketplace",
+            "authRule": "PUBLIC",
+            "params": [
+              {"name": "listing_id", "type": "u64", "description": "ID of the listing to purchase"},
+              {"name": "payment", "type": "Bucket", "description": "Payment bucket"}
+            ],
+            "returns": "Bucket",
+            "validations": [
+              "assert!(self.listings.get(&listing_id).is_some(), \"Listing not found\");",
+              "let listing = self.listings.get(&listing_id).unwrap();",
+              "assert!(listing.status == ListingStatus::Active, \"Listing is not active\");",
+              "assert!(payment.amount() >= listing.total_price, \"Insufficient payment\");"
+            ],
+            "body": [
+              "let mut listing = self.listings.get_mut(&listing_id).unwrap();",
+              "let buyer = Runtime::global_caller();",
+              "",
+              "// Calculate fees",
+              "let fee_amount = listing.total_price * self.marketplace_fee / dec!(\"100\");",
+              "let seller_amount = listing.total_price - fee_amount;",
+              "",
+              "// Take fees",
+              "let fees = payment.take(fee_amount);",
+              "self.fee_vault.put(fees);",
+              "",
+              "// Payment to seller (in real implementation)",
+              "let seller_payment = payment.take(seller_amount);",
+              "",
+              "// Update listing status",
+              "listing.status = ListingStatus::Sold;",
+              "",
+              "// Return change if any",
+              "let change = payment;",
+              "",
+              "Runtime::emit_event(ItemSold {",
+              "    listing_id,",
+              "    buyer,",
+              "    seller: listing.seller,",
+              "    final_price: listing.total_price",
+              "});",
+              "",
+              "// In real implementation, return the purchased resource",
+              "change"
+            ]
+          },
+          {
+            "name": "cancel_listing",
+            "description": "Cancels an active listing",
+            "authRule": "PUBLIC",
+            "params": [
+              {"name": "listing_id", "type": "u64", "description": "ID of the listing to cancel"}
+            ],
+            "validations": [
+              "assert!(self.listings.get(&listing_id).is_some(), \"Listing not found\");",
+              "let listing = self.listings.get(&listing_id).unwrap();",
+              "assert!(listing.seller == Runtime::global_caller(), \"Only seller can cancel listing\");",
+              "assert!(listing.status == ListingStatus::Active, \"Can only cancel active listings\");"
+            ],
+            "body": [
+              "let mut listing = self.listings.get_mut(&listing_id).unwrap();",
+              "listing.status = ListingStatus::Cancelled;",
+              "",
+              "// In real implementation, return the resource to seller"
+            ]
+          },
+          {
+            "name": "get_listing",
+            "description": "Retrieves information about a specific listing",
+            "authRule": "PUBLIC",
+            "isReadOnly": true,
+            "params": [
+              {"name": "listing_id", "type": "u64", "description": "ID of the listing to retrieve"}
+            ],
+            "returns": "Option<Listing>",
+            "body": [
+              "self.listings.get(&listing_id).cloned()"
+            ]
+          },
+          {
+            "name": "update_marketplace_fee",
+            "description": "Updates the marketplace fee percentage",
+            "authRule": "restrict_to(admin)",
+            "params": [
+              {"name": "new_fee", "type": "Decimal", "description": "New fee percentage"}
+            ],
+            "validations": [
+              "assert!(new_fee >= Decimal::zero() && new_fee <= dec!(\"10\"), \"Fee must be between 0% and 10%\");"
+            ],
+            "body": [
+              "self.marketplace_fee = new_fee;"
+            ]
+          },
+          {
+            "name": "withdraw_fees",
+            "description": "Withdraws collected fees from the marketplace",
+            "authRule": "restrict_to(admin)",
+            "returns": "Bucket",
+            "body": [
+              "self.fee_vault.take_all()"
+            ]
+          },
+          {
+            "name": "get_marketplace_stats",
+            "description": "Returns marketplace statistics",
+            "authRule": "PUBLIC",
+            "isReadOnly": true,
+            "returns": "(u64, Decimal, Decimal)",
+            "body": [
+              "(self.listing_counter, self.marketplace_fee, self.fee_vault.amount())"
+            ]
+          }
+        ]
+      }
+    ],
+    "utilityFunctions": [
+      {
+        "name": "calculate_fee",
+        "description": "Calculates the marketplace fee for a given amount",
+        "isPublic": true,
+        "params": [
+          {"name": "amount", "type": "Decimal", "description": "Amount to calculate fee for"},
+          {"name": "fee_percent", "type": "Decimal", "description": "Fee percentage"}
         ],
+        "returns": "Decimal",
         "body": [
-          "let owner = Runtime::caller();",
-          "Self {",
-          "    count: initial_value,",
-          "    owner: owner",
-          "}.instantiate().map_err(|e| RuntimeError::ApplicationError(e.into()))"
-        ]
-      },
-      "methods": [
-        {
-          "name": "increment",
-          "description": "Increments the counter by a specified amount",
-          "params": [
-            {
-              "name": "amount",
-              "type": "u64",
-              "description": "Amount to increment the counter by"
-            }
-          ],
-          "returns": "u64",
-          "returnsDescription": "The new counter value after incrementing",
-          "errors": [
-            "None, this operation cannot fail"
-          ],
-          "security": [
-            "No authentication required"
-          ],
-          "complexity": "O(1) - constant time operation",
-          "body": [
-            "let old_value = self.count;",
-            "self.count = self.count.checked_add(amount).unwrap_or_else(|| panic!(\"Counter overflow\"));",
-            "Runtime::emit_event(CounterUpdated {",
-            "    old_value,",
-            "    new_value: self.count,",
-            "    operation: \"increment\".to_string()",
-            "});",
-            "Ok(self.count)"
-          ]
-        },
-        {
-          "name": "decrement",
-          "description": "Decrements the counter by a specified amount",
-          "params": [
-            {
-              "name": "amount",
-              "type": "u64",
-              "description": "Amount to decrement the counter by"
-            }
-          ],
-          "returns": "u64",
-          "returnsDescription": "The new counter value after decrementing",
-          "errors": [
-            "RuntimeError if decrementing would cause an underflow"
-          ],
-          "security": [
-            "No authentication required"
-          ],
-          "complexity": "O(1) - constant time operation",
-          "validations": [
-            "if amount > self.count {",
-            "    return Err(RuntimeError::ApplicationError(\"Counter would underflow\".into()));",
-            "}"
-          ],
-          "body": [
-            "let old_value = self.count;",
-            "self.count -= amount;",
-            "Runtime::emit_event(CounterUpdated {",
-            "    old_value,",
-            "    new_value: self.count,",
-            "    operation: \"decrement\".to_string()",
-            "});",
-            "Ok(self.count)"
-          ]
-        },
-        {
-          "name": "reset",
-          "description": "Resets the counter to zero or a specified value",
-          "params": [
-            {
-              "name": "value",
-              "type": "Option<u64>",
-              "description": "Optional value to reset the counter to. If None, resets to zero."
-            }
-          ],
-          "returns": "u64",
-          "returnsDescription": "The new counter value after resetting",
-          "errors": [
-            "RuntimeError if caller is not the owner"
-          ],
-          "security": [
-            "Only the owner can reset the counter"
-          ],
-          "complexity": "O(1) - constant time operation",
-          "validations": [
-            "if Runtime::caller() != self.owner {",
-            "    return Err(RuntimeError::ApplicationError(\"Only the owner can reset the counter\".into()));",
-            "}"
-          ],
-          "body": [
-            "let old_value = self.count;",
-            "self.count = value.unwrap_or(0);",
-            "Runtime::emit_event(CounterUpdated {",
-            "    old_value,",
-            "    new_value: self.count,",
-            "    operation: \"reset\".to_string()",
-            "});",
-            "Ok(self.count)"
-          ]
-        },
-        {
-          "name": "get_count",
-          "description": "Returns the current counter value",
-          "returns": "u64",
-          "returnsDescription": "The current counter value",
-          "complexity": "O(1) - constant time operation",
-          "body": [
-            "Ok(self.count)"
-          ]
-        }
-      ]
-    }
-  ],
-  "tests": {
-    "description": "Tests for the Counter contract",
-    "unitTests": [
-      {
-        "name": "test_initialize",
-        "description": "Tests that the counter can be initialized with a value",
-        "body": [
-          "let (public_key, _, account) = test_runner.new_account();",
-          "let counter_component = test_runner.execute_manifest(ManifestBuilder::new()",
-          "    .call_function(COUNTER_PACKAGE, \"Counter\", \"new\", args![42u64])",
-          "    .build(),",
-          "    vec![&public_key]",
-          ");",
-          "let counter_component = counter_component.expect(\"Error creating counter\");",
-          "let result: u64 = test_runner.execute_manifest(ManifestBuilder::new()",
-          "    .call_method(counter_component, \"get_count\", args![])",
-          "    .build(),",
-          "    vec![&public_key]",
-          ").expect(\"Error calling get_count\");",
-          "assert_eq!(result, 42u64);"
+          "amount * fee_percent / dec!(\"100\")"
         ]
       },
       {
-        "name": "test_increment",
-        "description": "Tests incrementing the counter",
+        "name": "validate_price",
+        "description": "Validates if a price meets marketplace requirements",
+        "isPublic": true,
+        "params": [
+          {"name": "price", "type": "Decimal", "description": "Price to validate"}
+        ],
+        "returns": "bool",
         "body": [
-          "let (public_key, _, account) = test_runner.new_account();",
-          "let counter_component = test_runner.execute_manifest(ManifestBuilder::new()",
-          "    .call_function(COUNTER_PACKAGE, \"Counter\", \"new\", args![0u64])",
-          "    .build(),",
-          "    vec![&public_key]",
-          ");",
-          "let counter_component = counter_component.expect(\"Error creating counter\");",
-          "let result: u64 = test_runner.execute_manifest(ManifestBuilder::new()",
-          "    .call_method(counter_component, \"increment\", args![5u64])",
-          "    .build(),",
-          "    vec![&public_key]",
-          ").expect(\"Error incrementing counter\");",
-          "assert_eq!(result, 5u64);"
+          "price >= MIN_LISTING_PRICE && price <= dec!(\"1000000\")"
+        ]
+      }
+    ],
+    "tests": [
+      {
+        "name": "test_marketplace_creation",
+        "description": "Tests marketplace instantiation",
+        "body": [
+          "let package_address = test_runner.compile_and_publish(this_package!());",
+          "let manifest = ManifestBuilder::new()",
+          "    .call_function(",
+          "        package_address,",
+          "        \"Marketplace\",",
+          "        \"new\",",
+          "        manifest_args!(dec!(\"2.5\"))",
+          "    )",
+          "    .build();",
+          "let receipt = test_runner.execute_manifest(manifest, vec![]);",
+          "assert!(receipt.is_commit_success());"
         ]
       },
       {
-        "name": "test_decrement",
-        "description": "Tests decrementing the counter",
+        "name": "test_create_listing",
+        "description": "Tests creating a new listing",
         "body": [
-          "let (public_key, _, account) = test_runner.new_account();",
-          "let counter_component = test_runner.execute_manifest(ManifestBuilder::new()",
-          "    .call_function(COUNTER_PACKAGE, \"Counter\", \"new\", args![10u64])",
-          "    .build(),",
-          "    vec![&public_key]",
-          ");",
-          "let counter_component = counter_component.expect(\"Error creating counter\");",
-          "let result: u64 = test_runner.execute_manifest(ManifestBuilder::new()",
-          "    .call_method(counter_component, \"decrement\", args![3u64])",
-          "    .build(),",
-          "    vec![&public_key]",
-          ").expect(\"Error decrementing counter\");",
-          "assert_eq!(result, 7u64);"
-        ]
-      },
-      {
-        "name": "test_reset",
-        "description": "Tests resetting the counter",
-        "body": [
-          "let (public_key, _, account) = test_runner.new_account();",
-          "let counter_component = test_runner.execute_manifest(ManifestBuilder::new()",
-          "    .call_function(COUNTER_PACKAGE, \"Counter\", \"new\", args![10u64])",
-          "    .build(),",
-          "    vec![&public_key]",
-          ");",
-          "let counter_component = counter_component.expect(\"Error creating counter\");",
-          "let result: u64 = test_runner.execute_manifest(ManifestBuilder::new()",
-          "    .call_method(counter_component, \"reset\", args![Option::<u64>::None])",
-          "    .build(),",
-          "    vec![&public_key]",
-          ").expect(\"Error resetting counter\");",
-          "assert_eq!(result, 0u64);"
+          "// Test implementation for creating listing",
+          "assert!(true); // Placeholder"
         ]
       }
     ]

@@ -1,6 +1,6 @@
 namespace WebAPI.Infrastructure.Services.Scrypto;
 
-public class ScryptoContractGenerator : IScryptoContractGenerator
+public sealed class ScryptoContractGenerator : IScryptoContractGenerator
 {
     private readonly ILogger<ScryptoContractGenerator> _logger;
     private readonly IHandlebars _handlebars;
@@ -27,172 +27,29 @@ public class ScryptoContractGenerator : IScryptoContractGenerator
             return;
         }
 
-        _logger.LogInformation("Scrypto template project not found or incomplete, creating with Docker...");
+        _logger.LogInformation("Scrypto template project not found or incomplete, creating...");
 
         string parentDir = Path.GetDirectoryName(_templateProjectPath) ?? string.Empty;
         if (!Directory.Exists(parentDir))
         {
             Directory.CreateDirectory(parentDir);
-
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux) || RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
-            {
-                ProcessStartInfo chmodPsi = new ProcessStartInfo
-                {
-                    FileName = "chmod",
-                    Arguments = $"-R 775 \"{parentDir}\"",
-                    UseShellExecute = false,
-                    CreateNoWindow = true
-                };
-
-                using Process? chmodProcess = Process.Start(chmodPsi);
-                chmodProcess?.WaitForExit();
-            }
         }
-
-        string dockerImageName = "ghcr.io/krulknul/try-scrypto:1.3.0";
-        string containerName = $"scrypto-template-creator-{Guid.NewGuid():N}";
-        string containerMountPath = "/app/template";
-        string templateName = "scrypto-main-template";
 
         try
         {
-            bool dockerAvailable = CheckDockerAvailability();
-            if (!dockerAvailable)
+            // Сначала пытаемся создать проект локально
+            if (TryCreateProjectLocally())
             {
-                _logger.LogError("Docker is not available. Unable to create template.");
-                throw new InvalidOperationException("Docker is required for template creation but is not available");
+                _logger.LogInformation("Successfully created Scrypto template project locally");
+                return;
             }
 
-            if (!CheckDockerImage(dockerImageName))
-            {
-                _logger.LogInformation("Docker image not found, pulling: {Image}", dockerImageName);
-                if (!PullDockerImage(dockerImageName))
-                {
-                    _logger.LogError("Failed to pull Docker image. Unable to create template.");
-                    throw new InvalidOperationException($"Failed to pull Docker image {dockerImageName}");
-                }
-            }
-
-            string tempDir = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
-            Directory.CreateDirectory(tempDir);
-
-            try
-            {
-                _logger.LogInformation("Creating Scrypto template with Docker container...");
-
-                bool success = RunDockerContainer(dockerImageName, containerName, tempDir, containerMountPath, templateName);
-                if (!success)
-                {
-                    _logger.LogError("Docker container failed to create template.");
-                    throw new InvalidOperationException("Failed to create template with Docker");
-                }
-
-                // Проверяем, создана ли структура проекта напрямую в tempDir или в поддиректории
-                string srcPath = Path.Combine(tempDir, "src");
-                string generatedPath = tempDir;
-
-                // Если src нет в корне, возможно проект создан в поддиректории
-                if (!Directory.Exists(srcPath))
-                {
-                    string potentialSubdir = Path.Combine(tempDir, templateName);
-                    if (Directory.Exists(potentialSubdir) && Directory.Exists(Path.Combine(potentialSubdir, "src")))
-                    {
-                        generatedPath = potentialSubdir;
-                        srcPath = Path.Combine(generatedPath, "src");
-                        _logger.LogInformation("Found project structure in subdirectory: {Path}", generatedPath);
-                    }
-                }
-
-                // Проверяем, что структура проекта корректна
-                if (Directory.Exists(srcPath) && File.Exists(Path.Combine(srcPath, "lib.rs")))
-                {
-                    if (Directory.Exists(_templateProjectPath))
-                    {
-                        try
-                        {
-                            Directory.Delete(_templateProjectPath, true);
-                        }
-                        catch (Exception ex)
-                        {
-                            _logger.LogWarning(ex, "Could not delete existing template directory");
-                        }
-                    }
-
-                    Directory.CreateDirectory(Path.GetDirectoryName(_templateProjectPath) ?? string.Empty);
-
-                    _logger.LogInformation("Copying from {Source} to {Destination}", generatedPath, _templateProjectPath);
-                    CopyDirectory(generatedPath, _templateProjectPath);
-
-                    if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux) || RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
-                    {
-                        ProcessStartInfo chmodPsi = new ProcessStartInfo
-                        {
-                            FileName = "chmod",
-                            Arguments = $"-R 775 \"{_templateProjectPath}\"",
-                            UseShellExecute = false,
-                            CreateNoWindow = true
-                        };
-
-                        using Process? chmodProcess = Process.Start(chmodPsi);
-                        chmodProcess?.WaitForExit();
-                    }
-
-                    _logger.LogInformation("Scrypto template project copied successfully to: {Path}", _templateProjectPath);
-                }
-                else
-                {
-                    // Выводим содержимое директории для отладки
-                    _logger.LogError("Generated template structure is invalid. Contents of temp directory:");
-                    foreach (var dir in Directory.GetDirectories(tempDir))
-                    {
-                        _logger.LogError("Directory: {Dir}", dir);
-                    }
-
-                    foreach (var file in Directory.GetFiles(tempDir))
-                    {
-                        _logger.LogError("File: {File}", file);
-                    }
-
-                    throw new DirectoryNotFoundException($"Generated template structure not found at path: {srcPath}");
-                }
-            }
-            finally
-            {
-                if (Directory.Exists(tempDir))
-                {
-                    try
-                    {
-                        Directory.Delete(tempDir, true);
-                    }
-                    catch (Exception ex)
-                    {
-                        _logger.LogWarning(ex, "Failed to delete temporary directory: {TempDir}", tempDir);
-                    }
-                }
-
-                try
-                {
-                    ProcessStartInfo stopPsi = new ProcessStartInfo
-                    {
-                        FileName = "docker",
-                        Arguments = $"rm -f {containerName}",
-                        RedirectStandardOutput = true,
-                        RedirectStandardError = true,
-                        UseShellExecute = false,
-                        CreateNoWindow = true
-                    };
-                    using Process? stopProcess = Process.Start(stopPsi);
-                    stopProcess?.WaitForExit();
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogWarning(ex, "Failed to remove Docker container");
-                }
-            }
+            // Если локально не получилось, используем Docker
+            CreateProjectWithDocker();
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error during template creation with Docker");
+            _logger.LogError(ex, "Failed to create Scrypto template project");
             throw new InvalidOperationException("Failed to create Scrypto template with Docker", ex);
         }
 
@@ -205,18 +62,17 @@ public class ScryptoContractGenerator : IScryptoContractGenerator
         }
     }
 
-    private bool RunDockerContainer(string imageName, string containerName, string hostPath, string containerPath,
-        string templateName)
+    private bool TryCreateProjectLocally()
     {
         try
         {
-            EnsureDirectoryPermissions(hostPath);
+            _logger.LogInformation("Attempting to create Scrypto project locally...");
 
             ProcessStartInfo psi = new ProcessStartInfo
             {
-                FileName = "docker",
-                Arguments =
-                    $"run --name {containerName} --rm -v \"{hostPath}:{containerPath}\" {imageName} scrypto new-package {templateName}",
+                FileName = "scrypto",
+                Arguments = "new-package scrypto-main-template",
+                WorkingDirectory = Path.GetDirectoryName(_templateProjectPath),
                 RedirectStandardOutput = true,
                 RedirectStandardError = true,
                 UseShellExecute = false,
@@ -224,24 +80,202 @@ public class ScryptoContractGenerator : IScryptoContractGenerator
             };
 
             using Process? process = Process.Start(psi);
-            if (process == null)
-                return false;
-
-            process.OutputDataReceived += (_, e) =>
-            {
-                if (!string.IsNullOrEmpty(e.Data))
-                    _logger.LogInformation("Docker: {0}", e.Data);
-            };
-            process.ErrorDataReceived += (_, e) =>
-            {
-                if (!string.IsNullOrEmpty(e.Data))
-                    _logger.LogWarning("Docker: {0}", e.Data);
-            };
-
-            process.BeginOutputReadLine();
-            process.BeginErrorReadLine();
+            if (process == null) return false;
 
             process.WaitForExit(30000);
+
+            if (process.ExitCode == 0 && Directory.Exists(_templateProjectPath))
+            {
+                return true;
+            }
+
+            string error = process.StandardError.ReadToEnd();
+            _logger.LogWarning("Local Scrypto creation failed: {Error}", error);
+            return false;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Failed to create project locally");
+            return false;
+        }
+    }
+
+    private void CreateProjectWithDocker()
+    {
+        _logger.LogInformation("Creating Scrypto template with Docker...");
+
+        if (!CheckDockerAvailability())
+        {
+            throw new InvalidOperationException("Docker is not available and local Scrypto installation not found");
+        }
+
+        string dockerImageName = "ghcr.io/krulknul/try-scrypto:1.3.0";
+        string containerName = $"scrypto-template-creator-{Guid.NewGuid():N}";
+        string templateName = "scrypto-main-template";
+        string tempDir = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
+
+        Directory.CreateDirectory(tempDir);
+
+        try
+        {
+            if (!CheckDockerImage(dockerImageName))
+            {
+                _logger.LogInformation("Pulling Docker image: {Image}", dockerImageName);
+                if (!PullDockerImage(dockerImageName))
+                {
+                    throw new InvalidOperationException($"Failed to pull Docker image {dockerImageName}");
+                }
+            }
+
+            // Запускаем Docker с текущим пользователем
+            bool success = RunDockerContainerAsCurrentUser(dockerImageName, containerName, tempDir, templateName);
+            if (!success)
+            {
+                throw new InvalidOperationException("Docker container failed to create template");
+            }
+
+            // Находим созданный проект
+            string? projectPath = FindCreatedProject(tempDir, templateName);
+            if (string.IsNullOrEmpty(projectPath))
+            {
+                LogDirectoryContents(tempDir, "temp directory");
+                throw new DirectoryNotFoundException($"Created project not found in {tempDir}");
+            }
+
+            // Копируем в финальное место
+            if (Directory.Exists(_templateProjectPath))
+            {
+                Directory.Delete(_templateProjectPath, true);
+            }
+
+            string? parentDir = Path.GetDirectoryName(_templateProjectPath);
+            if (parentDir != null && !Directory.Exists(parentDir))
+            {
+                Directory.CreateDirectory(parentDir);
+            }
+
+            CopyDirectory(projectPath, _templateProjectPath);
+
+            _logger.LogInformation("Scrypto template project created successfully at: {Path}", _templateProjectPath);
+        }
+        finally
+        {
+            CleanupTempDirectory(tempDir);
+            CleanupDockerContainer(containerName);
+        }
+    }
+
+    // Получение UID текущего пользователя
+    private string GetCurrentUserId()
+    {
+        if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+        {
+            return "1000"; // Для Windows используем дефолтное значение
+        }
+
+        try
+        {
+            ProcessStartInfo psi = new ProcessStartInfo
+            {
+                FileName = "id",
+                Arguments = "-u",
+                RedirectStandardOutput = true,
+                UseShellExecute = false,
+                CreateNoWindow = true
+            };
+
+            using Process? process = Process.Start(psi);
+            if (process == null) return "1000";
+            
+            process.WaitForExit(5000);
+            if (process.ExitCode == 0)
+            {
+                return process.StandardOutput.ReadToEnd().Trim();
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Failed to get current user ID");
+        }
+
+        return "1000"; // fallback
+    }
+
+    // Получение GID текущего пользователя
+    private string GetCurrentGroupId()
+    {
+        if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+        {
+            return "1000"; // Для Windows используем дефолтное значение
+        }
+
+        try
+        {
+            ProcessStartInfo psi = new ProcessStartInfo
+            {
+                FileName = "id",
+                Arguments = "-g",
+                RedirectStandardOutput = true,
+                UseShellExecute = false,
+                CreateNoWindow = true
+            };
+
+            using Process? process = Process.Start(psi);
+            if (process == null) return "1000";
+            
+            process.WaitForExit(5000);
+            if (process.ExitCode == 0)
+            {
+                return process.StandardOutput.ReadToEnd().Trim();
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Failed to get current group ID");
+        }
+
+        return "1000"; // fallback
+    }
+
+    // Запуск Docker с текущим пользователем (БЕЗ SUDO!)
+    private bool RunDockerContainerAsCurrentUser(string imageName, string containerName, string hostPath, string templateName)
+    {
+        try
+        {
+            string uid = GetCurrentUserId();
+            string gid = GetCurrentGroupId();
+            
+            _logger.LogInformation("Running Docker with user {Uid}:{Gid}", uid, gid);
+
+            ProcessStartInfo psi = new ProcessStartInfo
+            {
+                FileName = "docker",
+                Arguments = $"run --name {containerName} --rm --user {uid}:{gid} -v \"{hostPath}:/workspace\" -w /workspace {imageName} scrypto new-package {templateName}",
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                UseShellExecute = false,
+                CreateNoWindow = true
+            };
+
+            _logger.LogInformation("Running Docker command: docker {Args}", psi.Arguments);
+
+            using Process? process = Process.Start(psi);
+            if (process == null) return false;
+
+            string output = process.StandardOutput.ReadToEnd();
+            string error = process.StandardError.ReadToEnd();
+
+            process.WaitForExit(60000);
+
+            if (!string.IsNullOrEmpty(output))
+            {
+                _logger.LogInformation("Docker output: {Output}", output);
+            }
+
+            if (!string.IsNullOrEmpty(error))
+            {
+                _logger.LogWarning("Docker error: {Error}", error);
+            }
 
             if (process.ExitCode != 0)
             {
@@ -258,12 +292,102 @@ public class ScryptoContractGenerator : IScryptoContractGenerator
         }
     }
 
+    private string? FindCreatedProject(string baseDir, string templateName)
+    {
+        string[] possiblePaths =
+        [
+            Path.Combine(baseDir, templateName),
+            Path.Combine(baseDir, "src"),
+            baseDir
+        ];
+
+        foreach (string path in possiblePaths)
+        {
+            if (Directory.Exists(path))
+            {
+                string srcPath = Path.Combine(path, "src");
+                string libPath = Path.Combine(srcPath, "lib.rs");
+                string cargoPath = Path.Combine(path, "Cargo.toml");
+
+                if (Directory.Exists(srcPath) && File.Exists(libPath) && File.Exists(cargoPath))
+                {
+                    _logger.LogInformation("Found valid Scrypto project at: {Path}", path);
+                    return path;
+                }
+            }
+        }
+
+        // Рекурсивный поиск
+        try
+        {
+            foreach (string subDir in Directory.GetDirectories(baseDir))
+            {
+                string? found = FindCreatedProject(subDir, templateName);
+                if (!string.IsNullOrEmpty(found))
+                {
+                    return found;
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Error during recursive project search");
+        }
+
+        return null;
+    }
+
+    private void LogDirectoryContents(string directory, string description)
+    {
+        try
+        {
+            _logger.LogError("Contents of {Description} ({Directory}):", description, directory);
+
+            if (!Directory.Exists(directory))
+            {
+                _logger.LogError("Directory does not exist!");
+                return;
+            }
+
+            foreach (string dir in Directory.GetDirectories(directory))
+            {
+                _logger.LogError("  DIR: {Name}", Path.GetFileName(dir));
+            }
+
+            foreach (string file in Directory.GetFiles(directory))
+            {
+                _logger.LogError("  FILE: {Name}", Path.GetFileName(file));
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error logging directory contents");
+        }
+    }
+
+    // Упрощенная очистка БЕЗ SUDO
+    private void CleanupTempDirectory(string tempDir)
+    {
+        if (!Directory.Exists(tempDir)) return;
+
+        try
+        {
+            Directory.Delete(tempDir, true);
+            _logger.LogDebug("Temporary directory cleaned up successfully: {TempDir}", tempDir);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Failed to delete temporary directory: {TempDir}. This is not critical.", tempDir);
+            // Не критично, если не удалось удалить временные файлы
+        }
+    }
+
     private bool CheckDockerAvailability()
     {
         try
         {
             _logger.LogInformation("Checking if Docker is available...");
-            ProcessStartInfo psi = new()
+            ProcessStartInfo psi = new ProcessStartInfo
             {
                 FileName = "docker",
                 Arguments = "--version",
@@ -274,14 +398,25 @@ public class ScryptoContractGenerator : IScryptoContractGenerator
             };
 
             using Process? process = Process.Start(psi);
-            if (process == null)
-                return false;
+            if (process == null) return false;
 
             process.WaitForExit(5000);
-            return process.ExitCode == 0;
+            bool isAvailable = process.ExitCode == 0;
+
+            if (isAvailable)
+            {
+                _logger.LogInformation("Docker is available");
+            }
+            else
+            {
+                _logger.LogWarning("Docker is not available");
+            }
+
+            return isAvailable;
         }
-        catch
+        catch (Exception ex)
         {
+            _logger.LogWarning(ex, "Error checking Docker availability");
             return false;
         }
     }
@@ -290,7 +425,7 @@ public class ScryptoContractGenerator : IScryptoContractGenerator
     {
         try
         {
-            ProcessStartInfo psi = new()
+            ProcessStartInfo psi = new ProcessStartInfo
             {
                 FileName = "docker",
                 Arguments = $"image inspect {imageName}",
@@ -301,14 +436,14 @@ public class ScryptoContractGenerator : IScryptoContractGenerator
             };
 
             using Process? process = Process.Start(psi);
-            if (process == null)
-                return false;
+            if (process == null) return false;
 
             process.WaitForExit();
             return process.ExitCode == 0;
         }
-        catch
+        catch (Exception ex)
         {
+            _logger.LogWarning(ex, "Error checking Docker image");
             return false;
         }
     }
@@ -317,7 +452,7 @@ public class ScryptoContractGenerator : IScryptoContractGenerator
     {
         try
         {
-            ProcessStartInfo psi = new()
+            ProcessStartInfo psi = new ProcessStartInfo
             {
                 FileName = "docker",
                 Arguments = $"pull {imageName}",
@@ -328,10 +463,9 @@ public class ScryptoContractGenerator : IScryptoContractGenerator
             };
 
             using Process? process = Process.Start(psi);
-            if (process == null)
-                return false;
+            if (process == null) return false;
 
-            process.WaitForExit(60000); // Ждем до 60 секунд для скачивания
+            process.WaitForExit(120000);
 
             if (process.ExitCode != 0)
             {
@@ -349,40 +483,38 @@ public class ScryptoContractGenerator : IScryptoContractGenerator
         }
     }
 
-
-    private void EnsureDirectoryPermissions(string path)
+    private void CleanupDockerContainer(string containerName)
     {
-        if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+        try
         {
-            try
+            ProcessStartInfo psi = new ProcessStartInfo
             {
-                ProcessStartInfo psi = new()
-                {
-                    FileName = "chmod",
-                    Arguments = $"-R 777 \"{path}\"",
-                    UseShellExecute = false,
-                    CreateNoWindow = true
-                };
-                using Process? process = Process.Start(psi);
-                process?.WaitForExit();
-            }
-            catch (Exception ex)
-            {
-                _logger.LogWarning(ex, "Failed to set directory permissions for: {Path}", path);
-            }
+                FileName = "docker",
+                Arguments = $"rm -f {containerName}",
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                UseShellExecute = false,
+                CreateNoWindow = true
+            };
+
+            using Process? process = Process.Start(psi);
+            process?.WaitForExit();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Failed to remove Docker container: {ContainerName}", containerName);
         }
     }
 
+    // Остальные методы остаются без изменений...
     public async Task<GenerateContractResponse> GenerateAsync(IFormFile? jsonFile, CancellationToken token = default)
     {
-        // 1. Проверка входных данных
         if (jsonFile == null || jsonFile.Length == 0)
         {
             _logger.LogWarning("JSON file is null or empty.");
             throw new ArgumentException("JSON file is required.", nameof(jsonFile));
         }
 
-        // 2. Чтение и парсинг JSON
         string jsonContent;
         using (StreamReader sr = new StreamReader(jsonFile.OpenReadStream()))
         {
@@ -403,19 +535,16 @@ public class ScryptoContractGenerator : IScryptoContractGenerator
             throw new InvalidDataException("Invalid JSON payload.", ex);
         }
 
-        // 3. Подготовка модели для шаблона
         IDictionary<string, object?> model = ConvertJToken(jObj) as IDictionary<string, object?> ??
                                              new Dictionary<string, object?>();
         model = CleanModel(model) as IDictionary<string, object?> ?? new Dictionary<string, object?>();
 
-        // 4. Проверка наличия шаблона и шаблонного проекта
         if (!File.Exists(_templatePath))
         {
             _logger.LogError("Template file not found: {Path}", _templatePath);
             throw new FileNotFoundException($"Template file not found: {_templatePath}");
         }
 
-        // Убедимся, что шаблонный проект существует
         EnsureTemplateProjectExists();
 
         if (!Directory.Exists(_templateProjectPath))
@@ -424,21 +553,17 @@ public class ScryptoContractGenerator : IScryptoContractGenerator
             throw new DirectoryNotFoundException($"Template project not found: {_templateProjectPath}");
         }
 
-        // 5. Создание временной директории для нового проекта
         string tempDir = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
         _logger.LogInformation("Creating temporary project directory: {TempDir}", tempDir);
 
         try
         {
-            // 5.1 Создаем директорию и копируем шаблонный проект
             Directory.CreateDirectory(tempDir);
             CopyDirectory(_templateProjectPath, tempDir);
             _logger.LogDebug("Template project copied to temp directory");
 
-            // 5.2 Чтение шаблона Handlebars
             string tplText = await File.ReadAllTextAsync(_templatePath, token).ConfigureAwait(false);
 
-            // 5.3 Компиляция и применение шаблона
             HandlebarsTemplate<object, object> template;
             try
             {
@@ -451,7 +576,6 @@ public class ScryptoContractGenerator : IScryptoContractGenerator
                 throw new InvalidDataException("Template compile error.", ex);
             }
 
-            // 5.4 Генерация кода смарт-контракта
             string scryptoCode;
             try
             {
@@ -470,7 +594,6 @@ public class ScryptoContractGenerator : IScryptoContractGenerator
                 throw new InvalidDataException("Generated Scrypto code is empty.");
             }
 
-            // 5.5 Запись сгенерированного кода
             string srcDir = Path.Combine(tempDir, "src");
             if (!Directory.Exists(srcDir))
             {
@@ -482,12 +605,10 @@ public class ScryptoContractGenerator : IScryptoContractGenerator
             await File.WriteAllTextAsync(libPath, scryptoCode, token);
             _logger.LogDebug("Generated code written to lib.rs");
 
-            // 6. Настройка имени проекта
             string projectName = MakeSafeProjectName(jObj["name"]?.ToString() ?? "scrypto_contract");
             _logger.LogInformation("Using project name: {ProjectName}", projectName);
             ReplaceProjectName(Path.Combine(tempDir, "Cargo.toml"), projectName);
 
-            // 7. Создание ZIP архива
             string zipPath = Path.Combine(Path.GetTempPath(), $"{Guid.NewGuid()}.zip");
             try
             {
@@ -514,40 +635,22 @@ public class ScryptoContractGenerator : IScryptoContractGenerator
         }
         finally
         {
-            // Очистка временной директории
-            if (Directory.Exists(tempDir))
-            {
-                try
-                {
-                    Directory.Delete(tempDir, true);
-                    _logger.LogDebug("Temporary project directory deleted");
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogWarning(ex, "Failed to delete temporary directory: {TempDir}", tempDir);
-                }
-            }
+            CleanupTempDirectory(tempDir);
         }
     }
 
+    // Остальные helper методы остаются без изменений...
     private static string MakeSafeProjectName(string projectName)
     {
-        // Удаляем спецсимволы и заменяем пробелы на подчеркивания
         string safe = Regex.Replace(projectName.Trim(), @"[^\w\-]", "_");
-
-        // Cargo требует имена пакетов в нижнем регистре
         safe = safe.ToLowerInvariant();
-
-        // Удаляем повторяющиеся подчеркивания
         safe = Regex.Replace(safe, @"_+", "_");
 
-        // Имя не должно начинаться с цифры
         if (Regex.IsMatch(safe, @"^\d"))
         {
             safe = "scrypto_" + safe;
         }
 
-        // Если имя пустое, используем дефолт
         if (string.IsNullOrWhiteSpace(safe))
         {
             safe = "scrypto_contract";
@@ -563,7 +666,6 @@ public class ScryptoContractGenerator : IScryptoContractGenerator
             throw new DirectoryNotFoundException($"Source directory not found: {sourceDir}");
         }
 
-        // Создаем целевую директорию, если её нет
         Directory.CreateDirectory(targetDir);
 
         foreach (string file in Directory.GetFiles(sourceDir))
@@ -579,11 +681,12 @@ public class ScryptoContractGenerator : IScryptoContractGenerator
         }
     }
 
-    private void ReplaceProjectName(string filePath, string projectName)
+    private static void ReplaceProjectName(string filePath, string projectName)
     {
         if (!File.Exists(filePath)) return;
+
         string text = File.ReadAllText(filePath);
-        text = Regex.Replace(text, @"name\s*=\s*"".*""", $"name = \"{projectName}\"");
+        text = Regex.Replace(text, @"name\s*=\s*"".*?""", $"name = \"{projectName}\"");
         File.WriteAllText(filePath, text);
     }
 
@@ -611,7 +714,7 @@ public class ScryptoContractGenerator : IScryptoContractGenerator
             }
 
             string input = args[0].ToString() ?? string.Empty;
-            string[] split = input.Split(new[] { '_', '-', ' ' }, StringSplitOptions.RemoveEmptyEntries);
+            string[] split = input.Split(['_', '-', ' '], StringSplitOptions.RemoveEmptyEntries);
 
             if (split.Length == 0)
             {
@@ -737,7 +840,7 @@ public class ScryptoContractGenerator : IScryptoContractGenerator
 
     private static IDictionary<string, object?> ConvertJObject(JObject jobject)
     {
-        IDictionary<string, object?> dict = new Dictionary<string, object?>();
+        Dictionary<string, object?> dict = new Dictionary<string, object?>();
         foreach (JProperty prop in jobject.Properties())
         {
             dict[prop.Name] = ConvertJToken(prop.Value);
