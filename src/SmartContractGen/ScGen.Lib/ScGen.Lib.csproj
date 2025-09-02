@@ -4,9 +4,17 @@
     <ProjectReference Include="..\..\common\BuildingBlocks\BuildingBlocks.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Constants\" />
+    <Folder Include="Contracts\Radix\" />
+    <Folder Include="Extensions\" />
+    <Folder Include="ImplContracts\" />
+    <Folder Include="Validation\" />
+  </ItemGroup>
+
   <PropertyGroup>
     <TargetFramework>net9.0</TargetFramework>
-    <RootNamespace>SC_Gen.Lib</RootNamespace>
+    <RootNamespace>ScGen.Lib</RootNamespace>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
   </PropertyGroup>

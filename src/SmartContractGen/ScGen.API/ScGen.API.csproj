@@ -4,7 +4,7 @@
     <TargetFramework>net9.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
-    <RootNamespace>SC_Gen.API</RootNamespace>
+    <RootNamespace>ScGen.API</RootNamespace>
   </PropertyGroup>
 
   <ItemGroup>
@@ -12,7 +12,11 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\SC-Gen.Lib\SC-Gen.Lib.csproj" />
+    <ProjectReference Include="..\ScGen.Lib\ScGen.Lib.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Infrastructure\" />
   </ItemGroup>
 
 </Project>

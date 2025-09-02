@@ -1,0 +1,16 @@
+global using System;
+global using System.Resources;
+global using DotNext.Resources;
+global using System.Diagnostics;
+global using BuildingBlocks.Logging;
+global using BuildingBlocks.Constants;
+global using Microsoft.AspNetCore.Mvc;
+global using BuildingBlocks.Resources;
+global using Microsoft.AspNetCore.Http;
+global using BuildingBlocks.Enums.Logging;
+global using Microsoft.Extensions.Logging;
+global using Microsoft.AspNetCore.Builder;
+global using Microsoft.AspNetCore.Diagnostics;
+global using System.Runtime.CompilerServices;
+global using Microsoft.Extensions.Configuration;
+global using System.ComponentModel.DataAnnotations;

@@ -7,9 +7,9 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{BADAA2ED-CCA
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "SmartContractGen", "SmartContractGen", "{A2958BF6-357A-46FC-BB5B-7FE04F48D0EC}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SC-Gen.API", "src\SmartContractGen\SC-Gen.API\SC-Gen.API.csproj", "{E2E54919-85CC-47B2-96CB-D78DEE1A04E6}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ScGen.API", "src\SmartContractGen\ScGen.API\ScGen.API.csproj", "{E2E54919-85CC-47B2-96CB-D78DEE1A04E6}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SC-Gen.Lib", "src\SmartContractGen\SC-Gen.Lib\SC-Gen.Lib.csproj", "{DC450E32-F4E3-4352-9D60-E5A9488BDDCE}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ScGen.Lib", "src\SmartContractGen\ScGen.Lib\ScGen.Lib.csproj", "{DC450E32-F4E3-4352-9D60-E5A9488BDDCE}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "deployments", "deployments", "{27765B9E-CD88-4D21-A7F9-B6AC75308796}"
 	ProjectSection(SolutionItems) = preProject
