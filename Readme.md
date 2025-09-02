@@ -1,1 +1,0 @@
-# MVP Smart Contract Generator
