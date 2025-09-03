@@ -1,6 +1,6 @@
 namespace BuildingBlocks.Patterns.Result;
 
-public static class Messages
+public static class ResultMessages
 {
     public const string Ok="Ok";
     public const string Conflict="Conflict";

@@ -4,7 +4,7 @@ namespace ScGen.API.Infrastructure.Controllers.Base;
 /// This controller handles unhandled exceptions for the API and returns a corresponding error response.
 /// </summary>
 [Route("/error")]
-[ApiExplorerSettings(IgnoreApi = true)] // This hides the error endpoint from API documentation.
+[ApiExplorerSettings(IgnoreApi = true)] 
 public class ErrorController(ILogger<ErrorController> logger) : BaseController
 {
     /// <summary>

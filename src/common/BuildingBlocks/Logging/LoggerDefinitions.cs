@@ -215,12 +215,11 @@ public static partial class LoggerDefinitions
         Level = LogLevel.Error,
         EventName = nameof(LogEventId.OperationFailedWithException),
         Message =
-            "Operation failed with exception: {OperationName} | Type: {ExceptionType} | User: {UserId} | Correlation: {CorrelationId}")]
+            "Operation failed with exception: {OperationName} | Type: {ExceptionMessage} | User: {UserId} | Correlation: {CorrelationId}")]
     public static partial void OperationFailedWithException(
         this ILogger logger,
-        Exception exception,
         string operationName,
-        string exceptionType,
+        string exceptionMessage,
         string? userId = null,
         string? correlationId = null);
 

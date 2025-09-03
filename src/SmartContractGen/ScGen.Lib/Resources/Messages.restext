@@ -1,0 +1,3 @@
+EmptyJson=JSON file is empty.
+HandlebarTemplateNotFound=HandlebarTemplate file not found.
+HandlebarTemplateProcessingError=Error processing HandlebarTemplate file.

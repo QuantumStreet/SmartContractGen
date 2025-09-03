@@ -1,5 +1,3 @@
-using ScGen.Lib.DTOs.Responses;
-
 namespace ScGen.Lib.Contracts.BaseContracts;
 
 public interface IContractCompile<T> where T : BaseCompileContractResponse

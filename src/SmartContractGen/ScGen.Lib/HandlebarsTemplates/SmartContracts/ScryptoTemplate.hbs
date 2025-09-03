@@ -1,0 +1,1069 @@
+{{!-- Comprehensive Scrypto Smart Contract Template --}}
+{{!-- Generated on: 2025-09-01 10:25:08 UTC --}}
+{{!-- Template covers the complete Scrypto language feature set --}}
+{{!-- Updated by: nazarovqurbonali --}}
+
+{{#if imports}}
+    // ================ Imports ================
+    {{#each imports}}
+        use {{{this}}};
+    {{/each}}
+{{/if}}
+
+use scrypto::prelude::*;
+
+{{#if additionalImports}}
+    // ================ Additional Imports ================
+    {{#each additionalImports}}
+        use {{{this}}};
+    {{/each}}
+{{/if}}
+
+{{#if typeAliases}}
+    // ================ Type Aliases ================
+    {{#each typeAliases}}
+        {{#if description}}/// {{{description}}}{{/if}}
+        pub type {{{name}}} = {{{definition}}};
+    {{/each}}
+
+{{/if}}
+
+{{#if constants}}
+    // ================ Constants ================
+    {{#each constants}}
+        {{#if description}}/// {{{description}}}{{/if}}
+        pub const {{{name}}}: {{{type}}} = {{{value}}};
+    {{/each}}
+
+{{/if}}
+
+{{#if globalFunctions}}
+    // ================ Global Functions ================
+    {{#each globalFunctions}}
+        {{#if description}}/// {{{description}}}{{/if}}
+        {{#if params}}
+            {{#each params}}
+                /// * `{{name}}` - {{{description}}}
+            {{/each}}
+        {{/if}}
+        pub fn {{{name}}}(
+        {{#if params}}
+            {{#each params}}
+                {{{name}}}: {{{type}}}{{#unless @last}},{{/unless}}
+            {{/each}}
+        {{/if}}
+        ){{#if returns}} -> {{{returns}}}{{/if}} {
+        {{#if body}}
+            {{#each body}}
+                {{{this}}}
+            {{/each}}
+        {{else}}
+            // Default implementation
+        {{/if}}
+        }
+
+    {{/each}}
+{{/if}}
+
+{{#if enums}}
+    // ================ Enums ================
+    {{#each enums}}
+        {{#if description}}/// {{{description}}}{{/if}}
+        {{#if derives}}
+            #[derive({{#each derives}}{{{this}}}{{#unless @last}}, {{/unless}}{{/each}})]
+        {{else}}
+            #[derive(ScryptoSbor, Clone, Debug, PartialEq, Eq)]
+        {{/if}}
+        {{#if scryptoAttributes}}
+            {{#each scryptoAttributes}}
+                #[{{{this}}}]
+            {{/each}}
+        {{/if}}
+        pub enum {{{name}}} {
+        {{#each variants}}
+            {{#if description}}/// {{{description}}}{{/if}}
+            {{{name}}}{{#if fields}}({{#each fields}}{{{type}}}{{#unless @last}}, {{/unless}}{{/each}}){{/if}}{{#if namedFields}} {
+            {{#each namedFields}}
+                {{{name}}}: {{{type}}},
+            {{/each}}
+            }{{/if}},
+        {{/each}}
+        }
+
+        {{#if methods}}
+            impl {{{name}}} {
+            {{#each methods}}
+                {{#if description}}/// {{{description}}}{{/if}}
+                pub fn {{{name}}}(&self){{#if returns}} -> {{{returns}}}{{else}} -> bool{{/if}} {
+                {{#if body}}
+                    {{#each body}}
+                        {{{this}}}
+                    {{/each}}
+                {{else}}
+                    true
+                {{/if}}
+                }
+
+            {{/each}}
+            }
+        {{/if}}
+    {{/each}}
+
+{{/if}}
+
+{{#if events}}
+    // ================ Events ================
+    {{#each events}}
+        {{#if description}}/// {{{description}}}{{/if}}
+        #[derive(ScryptoSbor, ScryptoEvent)]
+        pub struct {{{name}}} {
+        {{#each fields}}
+            {{#if description}}/// {{{description}}}{{/if}}
+            pub {{{name}}}: {{{type}}},
+        {{/each}}
+        }
+
+    {{/each}}
+{{/if}}
+
+{{#if resourceDefinitions}}
+    // ================ Resource Definitions ================
+    {{#each resourceDefinitions}}
+        {{#if description}}/// {{{description}}}{{/if}}
+        {{#if derives}}
+            #[derive({{#each derives}}{{{this}}}{{#unless @last}}, {{/unless}}{{/each}})]
+        {{else}}
+            #[derive(ScryptoSbor, NonFungibleData, Clone, Debug)]
+        {{/if}}
+        pub struct {{{name}}} {
+        {{#each fields}}
+            {{#if description}}/// {{{description}}}{{/if}}
+            {{#if mutable}}#[mutable]{{/if}}
+            pub {{{name}}}: {{{type}}},
+        {{/each}}
+        }
+
+        {{#if methods}}
+            impl {{{name}}} {
+            {{#each methods}}
+                {{#if description}}/// {{{description}}}{{/if}}
+                pub fn {{{name}}}(
+                &{{#if mutable}}mut {{/if}}self{{#if params}},{{/if}}
+                {{#if params}}
+                    {{#each params}}
+                        {{{name}}}: {{{type}}}{{#unless @last}},{{/unless}}
+                    {{/each}}
+                {{/if}}
+                ){{#if returns}} -> {{{returns}}}{{/if}} {
+                {{#if body}}
+                    {{#each body}}
+                        {{{this}}}
+                    {{/each}}
+                {{/if}}
+                }
+
+            {{/each}}
+            }
+        {{/if}}
+    {{/each}}
+
+{{/if}}
+
+{{#if accessRules}}
+    // ================ Access Rules ================
+    {{#each accessRules}}
+        {{#if description}}/// {{{description}}}{{/if}}
+        pub fn {{{name}}}() -> AccessRule {
+        {{#if body}}
+            {{#each body}}
+                {{{this}}}
+            {{/each}}
+        {{else}}
+            rule!(allow_all)
+        {{/if}}
+        }
+
+    {{/each}}
+{{/if}}
+
+{{#if blueprints}}
+    {{#each blueprints}}
+        // ================ Blueprint: {{{name}}} ================
+        #[blueprint]
+        {{#if features}}
+            #[features({{#each features}}{{{this}}}{{#unless @last}}, {{/unless}}{{/each}})]
+        {{/if}}
+        mod {{{name}}} {
+        {{#if blueprintImports}}
+            // Blueprint-specific imports
+            {{#each blueprintImports}}
+                use {{{this}}};
+            {{/each}}
+
+        {{/if}}
+        {{#if enableMethodAuth}}
+            enable_method_auth! {
+            roles {
+            {{#each authRoles}}
+                {{{name}}} => {{#if updatable}}updatable_by: [{{#each updatableBy}}{{{this}}}{{#unless @last}}, {{/unless}}{{/each}}]{{else}}updatable_by: []{{/if}};
+            {{/each}}
+            },
+            methods {
+            {{#each methods}}
+                {{{name}}} => {{#if authRule}}{{{authRule}}}{{else}}PUBLIC{{/if}};
+            {{/each}}
+            {{#if instantiationFunctions}}
+                {{#each instantiationFunctions}}
+                    {{{name}}} => {{#if authRule}}{{{authRule}}}{{else}}PUBLIC{{/if}};
+                {{/each}}
+            {{/if}}
+            {{#if constructor}}
+                new => {{#if constructor.authRule}}{{{constructor.authRule}}}{{else}}PUBLIC{{/if}};
+            {{/if}}
+            }
+            }
+        {{/if}}
+
+        {{#if structs}}
+            // ================ Structs ================
+            {{#each structs}}
+                {{#if description}}/// {{{description}}}{{/if}}
+                {{#if derives}}
+                    #[derive({{#each derives}}{{{this}}}{{#unless @last}}, {{/unless}}{{/each}})]
+                {{/if}}
+                {{#if scryptoAttributes}}
+                    {{#each scryptoAttributes}}
+                        #[{{{this}}}]
+                    {{/each}}
+                {{/if}}
+                struct {{{name}}} {
+                {{#each fields}}
+                    {{#if description}}/// {{{description}}}{{/if}}
+                    {{#if fieldAttributes}}
+                        {{#each fieldAttributes}}
+                            #[{{{this}}}]
+                        {{/each}}
+                    {{/if}}
+                    {{{name}}}: {{{type}}},
+                {{/each}}
+                }
+
+                {{#if methods}}
+                    impl {{{name}}} {
+                    {{#each methods}}
+                        {{#if description}}/// {{{description}}}{{/if}}
+                        {{#if params}}
+                            {{#each params}}
+                                /// * `{{name}}` - {{{description}}}
+                            {{/each}}
+                        {{/if}}
+                        {{#if visibility}}{{visibility}} {{/if}}fn {{{name}}}(
+                        &{{#if mutable}}mut {{/if}}self{{#if params}},{{/if}}
+                        {{#if params}}
+                            {{#each params}}
+                                {{{name}}}: {{{type}}}{{#unless @last}},{{/unless}}
+                            {{/each}}
+                        {{/if}}
+                        ){{#if returns}} -> {{{returns}}}{{/if}} {
+                        {{#if body}}
+                            {{#each body}}
+                                {{{this}}}
+                            {{/each}}
+                        {{/if}}
+                        }
+
+                    {{/each}}
+                    }
+                {{/if}}
+            {{/each}}
+
+        {{/if}}
+        // ================ Component State ================
+        {{#if componentState}}
+            {{#if componentState.description}}/// {{{componentState.description}}}{{/if}}
+            struct {{{componentState.name}}} {
+            {{#each componentState.fields}}
+                {{#if description}}/// {{{description}}}{{/if}}
+                {{{name}}}: {{{type}}},
+            {{/each}}
+            }
+        {{else}}
+            {{#if state}}
+                {{#if description}}/// {{{description}}}{{/if}}
+                struct {{{name}}} {
+                {{#each state}}
+                    {{#if description}}/// {{{description}}}{{/if}}
+                    {{{name}}}: {{{type}}},
+                {{/each}}
+                }
+            {{/if}}
+        {{/if}}
+
+        impl {{{name}}} {
+        {{#if instantiationFunctions}}
+            // ================ Instantiation Functions ================
+            {{#each instantiationFunctions}}
+                {{#if description}}/// {{{description}}}{{/if}}
+                {{#if params}}
+                    {{#each params}}
+                        /// * `{{name}}` - {{{description}}}
+                    {{/each}}
+                {{/if}}
+                pub fn {{{name}}}(
+                {{#if params}}
+                    {{#each params}}
+                        {{{name}}}: {{{type}}}{{#unless @last}},{{/unless}}
+                    {{/each}}
+                {{/if}}
+                ){{#if returns}} -> {{{returns}}}{{else}} -> Global<{{{../name}}}>{{/if}} {
+                {{#if validations}}
+                    // ================ Validations ================
+                    {{#each validations}}
+                        {{{this}}}
+                    {{/each}}
+
+                {{/if}}
+                {{#if resourceCreations}}
+                    // ================ Resource Creation ================
+                    {{#each resourceCreations}}
+                        {{{this}}}
+                    {{/each}}
+
+                {{/if}}
+                {{#if ownerRoleSetup}}
+                    // ================ Owner Role Setup ================
+                    {{#each ownerRoleSetup}}
+                        {{{this}}}
+                    {{/each}}
+
+                {{/if}}
+                {{#if body}}
+                    // ================ Instantiation Logic ================
+                    {{#each body}}
+                        {{{this}}}
+                    {{/each}}
+                {{else}}
+                    // Default component instantiation
+                    Self {
+                    {{#if ../componentState}}
+                        {{#each ../componentState.fields}}
+                            {{{name}}}: {{{defaultValue}}},
+                        {{/each}}
+                    {{else}}
+                        {{#each ../state}}
+                            {{{name}}}: {{{defaultValue}}},
+                        {{/each}}
+                    {{/if}}
+                    }
+                    .instantiate()
+                    .prepare_to_globalize(OwnerRole::None)
+                    .globalize()
+                {{/if}}
+                }
+
+            {{/each}}
+        {{else}}
+            {{#if constructor}}
+                // ================ Constructor ================
+                {{#if constructor.description}}/// {{{constructor.description}}}{{/if}}
+                {{#if constructor.params}}
+                    {{#each constructor.params}}
+                        /// * `{{name}}` - {{{description}}}
+                    {{/each}}
+                {{/if}}
+                pub fn new(
+                {{#if constructor.params}}
+                    {{#each constructor.params}}
+                        {{{name}}}: {{{type}}}{{#unless @last}},{{/unless}}
+                    {{/each}}
+                {{/if}}
+                ) -> Global<{{{name}}}> {
+                {{#if constructor.validations}}
+                    // ================ Validations ================
+                    {{#each constructor.validations}}
+                        {{{this}}}
+                    {{/each}}
+
+                {{/if}}
+                {{#if constructor.resourceCreations}}
+                    // ================ Resource Creation ================
+                    {{#each constructor.resourceCreations}}
+                        {{{this}}}
+                    {{/each}}
+
+                {{/if}}
+                {{#if constructor.body}}
+                    // ================ Constructor Logic ================
+                    {{#each constructor.body}}
+                        {{{this}}}
+                    {{/each}}
+                {{else}}
+                    // Default component instantiation
+                    Self {
+                    {{#each state}}
+                        {{{name}}}: {{{defaultValue}}},
+                    {{/each}}
+                    }
+                    .instantiate()
+                    .prepare_to_globalize(OwnerRole::None)
+                    .globalize()
+                {{/if}}
+                }
+            {{/if}}
+        {{/if}}
+
+        {{#if methods}}
+            // ================ Component Methods ================
+            {{#each methods}}
+                {{#if description}}/// {{{description}}}{{/if}}
+                {{#if params}}
+                    {{#each params}}
+                        /// * `{{name}}` - {{{description}}}
+                    {{/each}}
+                {{/if}}
+                {{#if authAttributes}}
+                    {{#each authAttributes}}
+                        #[{{{this}}}]
+                    {{/each}}
+                {{/if}}
+                pub fn {{{name}}}(
+                {{#if isReadOnly}}&self{{else}}&mut self{{/if}}{{#if params}},{{/if}}
+                {{#if params}}
+                    {{#each params}}
+                        {{{name}}}: {{{type}}}{{#unless @last}},{{/unless}}
+                    {{/each}}
+                {{/if}}
+                ){{#if returns}} -> {{{returns}}}{{/if}} {
+                {{#if validations}}
+                    // ================ Validations ================
+                    {{#each validations}}
+                        {{{this}}}
+                    {{/each}}
+
+                {{/if}}
+                {{#if assertions}}
+                    // ================ Assertions ================
+                    {{#each assertions}}
+                        assert!({{{condition}}}, "{{{message}}}");
+                    {{/each}}
+
+                {{/if}}
+                {{#if eventEmissions}}
+                    // ================ Event Emissions ================
+                    {{#each eventEmissions}}
+                        Runtime::emit_event({{{eventName}}} {
+                        {{#each fields}}
+                            {{{name}}}: {{{value}}}{{#unless @last}},{{/unless}}
+                        {{/each}}
+                        });
+                    {{/each}}
+
+                {{/if}}
+                {{#if events}}
+                    // ================ Event Emissions ================
+                    {{#each events}}
+                        Runtime::emit_event({{{this}}});
+                    {{/each}}
+
+                {{/if}}
+                {{#if body}}
+                    // ================ Method Logic ================
+                    {{#each body}}
+                        {{{this}}}
+                    {{/each}}
+                {{else}}
+                    // Default implementation
+                {{/if}}
+                }
+
+            {{/each}}
+        {{/if}}
+
+        {{#if staticMethods}}
+            // ================ Static Methods ================
+            {{#each staticMethods}}
+                {{#if description}}/// {{{description}}}{{/if}}
+                {{#if params}}
+                    {{#each params}}
+                        /// * `{{name}}` - {{{description}}}
+                    {{/each}}
+                {{/if}}
+                pub fn {{{name}}}(
+                {{#if params}}
+                    {{#each params}}
+                        {{{name}}}: {{{type}}}{{#unless @last}},{{/unless}}
+                    {{/each}}
+                {{/if}}
+                ){{#if returns}} -> {{{returns}}}{{/if}} {
+                {{#if body}}
+                    {{#each body}}
+                        {{{this}}}
+                    {{/each}}
+                {{/if}}
+                }
+
+            {{/each}}
+        {{/if}}
+        }
+        }
+
+    {{/each}}
+{{/if}}
+
+{{#if traits}}
+    // ================ Traits ================
+    {{#each traits}}
+        {{#if description}}/// {{{description}}}{{/if}}
+        pub trait {{{name}}} {
+        {{#each methods}}
+            {{#if description}}/// {{{description}}}{{/if}}
+            fn {{{name}}}(
+            &{{#if mutable}}mut {{/if}}self{{#if params}},{{/if}}
+            {{#if params}}
+                {{#each params}}
+                    {{{name}}}: {{{type}}}{{#unless @last}},{{/unless}}
+                {{/each}}
+            {{/if}}
+            ){{#if returns}} -> {{{returns}}}{{/if}}{{#if hasDefault}} {
+            {{#each defaultBody}}
+                {{{this}}}
+            {{/each}}
+            }{{else}};{{/if}}
+
+        {{/each}}
+        }
+
+    {{/each}}
+{{/if}}
+
+{{#if implementations}}
+    // ================ Trait Implementations ================
+    {{#each implementations}}
+        {{#if description}}/// {{{description}}}{{/if}}
+        impl {{{traitName}}} for {{{structName}}} {
+        {{#each methods}}
+            fn {{{name}}}(
+            &{{#if mutable}}mut {{/if}}self{{#if params}},{{/if}}
+            {{#if params}}
+                {{#each params}}
+                    {{{name}}}: {{{type}}}{{#unless @last}},{{/unless}}
+                {{/each}}
+            {{/if}}
+            ){{#if returns}} -> {{{returns}}}{{/if}} {
+            {{#if body}}
+                {{#each body}}
+                    {{{this}}}
+                {{/each}}
+            {{/if}}
+            }
+
+        {{/each}}
+        }
+
+    {{/each}}
+{{/if}}
+
+{{#if macros}}
+    // ================ Macros ================
+    {{#each macros}}
+        {{#if description}}/// {{{description}}}{{/if}}
+        macro_rules! {{{name}}} {
+        {{#each rules}}
+            ({{{pattern}}}) => {
+            {{{expansion}}}
+            };
+        {{/each}}
+        }
+
+    {{/each}}
+{{/if}}
+
+{{#if modules}}
+    // ================ Modules ================
+    {{#each modules}}
+        {{#if description}}/// {{{description}}}{{/if}}
+        {{#if isPublic}}pub {{/if}}mod {{{name}}} {
+        {{#if imports}}
+            {{#each imports}}
+                use {{{this}}};
+            {{/each}}
+
+        {{/if}}
+        {{#if structs}}
+            {{#each structs}}
+                {{#if description}}/// {{{description}}}{{/if}}
+                {{#if isPublic}}pub {{/if}}struct {{{name}}} {
+                {{#each fields}}
+                    {{#if description}}/// {{{description}}}{{/if}}
+                    {{#if isPublic}}pub {{/if}}{{{name}}}: {{{type}}},
+                {{/each}}
+                }
+
+            {{/each}}
+        {{/if}}
+        {{#if functions}}
+            {{#each functions}}
+                {{#if description}}/// {{{description}}}{{/if}}
+                {{#if isPublic}}pub {{/if}}fn {{{name}}}(
+                {{#if params}}
+                    {{#each params}}
+                        {{{name}}}: {{{type}}}{{#unless @last}},{{/unless}}
+                    {{/each}}
+                {{/if}}
+                ){{#if returns}} -> {{{returns}}}{{/if}} {
+                {{#if body}}
+                    {{#each body}}
+                        {{{this}}}
+                    {{/each}}
+                {{/if}}
+                }
+
+            {{/each}}
+        {{/if}}
+        }
+
+    {{/each}}
+{{/if}}
+
+{{#if resourceHelpers}}
+    // ================ Resource Helper Functions ================
+    {{#each resourceHelpers}}
+        {{#if description}}/// {{{description}}}{{/if}}
+        pub fn {{{name}}}(
+        {{#if params}}
+            {{#each params}}
+                {{{name}}}: {{{type}}}{{#unless @last}},{{/unless}}
+            {{/each}}
+        {{/if}}
+        ){{#if returns}} -> {{{returns}}}{{else}} -> (ResourceAddress, Bucket){{/if}} {
+        {{#if body}}
+            {{#each body}}
+                {{{this}}}
+            {{/each}}
+        {{else}}
+            // Default resource creation
+            ResourceBuilder::new_fungible(OwnerRole::None)
+            .divisibility(DIVISIBILITY_MAXIMUM)
+            .mint_initial_supply(1000)
+        {{/if}}
+        }
+
+    {{/each}}
+{{/if}}
+
+{{#if nftHelpers}}
+    // ================ NFT Helper Functions ================
+    {{#each nftHelpers}}
+        {{#if description}}/// {{{description}}}{{/if}}
+        pub fn {{{name}}}(
+        {{#if params}}
+            {{#each params}}
+                {{{name}}}: {{{type}}}{{#unless @last}},{{/unless}}
+            {{/each}}
+        {{/if}}
+        ){{#if returns}} -> {{{returns}}}{{else}} -> (ResourceAddress, Bucket){{/if}} {
+        {{#if body}}
+            {{#each body}}
+                {{{this}}}
+            {{/each}}
+        {{else}}
+            // Default NFT creation
+            ResourceBuilder::new_integer_non_fungible::<{{{dataType}}}>(OwnerRole::None)
+            .mint_initial_supply([(1u64, {{{dataType}}} { /* fields */ })])
+        {{/if}}
+        }
+
+    {{/each}}
+{{/if}}
+
+{{#if vaultHelpers}}
+    // ================ Vault Helper Functions ================
+    {{#each vaultHelpers}}
+        {{#if description}}/// {{{description}}}{{/if}}
+        pub fn {{{name}}}(
+        {{#if params}}
+            {{#each params}}
+                {{{name}}}: {{{type}}}{{#unless @last}},{{/unless}}
+            {{/each}}
+        {{/if}}
+        ){{#if returns}} -> {{{returns}}}{{else}} -> Vault{{/if}} {
+        {{#if body}}
+            {{#each body}}
+                {{{this}}}
+            {{/each}}
+        {{else}}
+            // Default vault creation
+            Vault::new(XRD)
+        {{/if}}
+        }
+
+    {{/each}}
+{{/if}}
+
+{{#if keyValueStoreHelpers}}
+    // ================ KeyValueStore Helper Functions ================
+    {{#each keyValueStoreHelpers}}
+        {{#if description}}/// {{{description}}}{{/if}}
+        pub fn {{{name}}}(
+        {{#if params}}
+            {{#each params}}
+                {{{name}}}: {{{type}}}{{#unless @last}},{{/unless}}
+            {{/each}}
+        {{/if}}
+        ){{#if returns}} -> {{{returns}}}{{else}} -> KeyValueStore<{{{keyType}}}, {{{valueType}}}>{{/if}} {
+        {{#if body}}
+            {{#each body}}
+                {{{this}}}
+            {{/each}}
+        {{else}}
+            // Default KeyValueStore creation
+            KeyValueStore::new()
+        {{/if}}
+        }
+
+    {{/each}}
+{{/if}}
+
+{{#if ownedHelpers}}
+    // ================ Owned Helper Functions ================
+    {{#each ownedHelpers}}
+        {{#if description}}/// {{{description}}}{{/if}}
+        pub fn {{{name}}}(
+        {{#if params}}
+            {{#each params}}
+                {{{name}}}: {{{type}}}{{#unless @last}},{{/unless}}
+            {{/each}}
+        {{/if}}
+        ){{#if returns}} -> {{{returns}}}{{else}} -> Owned<{{{ownedType}}}>{{/if}} {
+        {{#if body}}
+            {{#each body}}
+                {{{this}}}
+            {{/each}}
+        {{else}}
+            // Default Owned creation
+            Owned::new({{{defaultValue}}})
+        {{/if}}
+        }
+
+    {{/each}}
+{{/if}}
+
+{{#if proofHelpers}}
+    // ================ Proof Helper Functions ================
+    {{#each proofHelpers}}
+        {{#if description}}/// {{{description}}}{{/if}}
+        pub fn {{{name}}}(
+        {{#if params}}
+            {{#each params}}
+                {{{name}}}: {{{type}}}{{#unless @last}},{{/unless}}
+            {{/each}}
+        {{/if}}
+        ){{#if returns}} -> {{{returns}}}{{else}} -> Proof{{/if}} {
+        {{#if body}}
+            {{#each body}}
+                {{{this}}}
+            {{/each}}
+        {{else}}
+            // Default proof validation
+            proof.validate_proof_of_amount(&resource_address, amount)
+        {{/if}}
+        }
+
+    {{/each}}
+{{/if}}
+
+{{#if bucketHelpers}}
+    // ================ Bucket Helper Functions ================
+    {{#each bucketHelpers}}
+        {{#if description}}/// {{{description}}}{{/if}}
+        pub fn {{{name}}}(
+        {{#if params}}
+            {{#each params}}
+                {{{name}}}: {{{type}}}{{#unless @last}},{{/unless}}
+            {{/each}}
+        {{/if}}
+        ){{#if returns}} -> {{{returns}}}{{else}} -> Bucket{{/if}} {
+        {{#if body}}
+            {{#each body}}
+                {{{this}}}
+            {{/each}}
+        {{else}}
+            // Default bucket operation
+            bucket
+        {{/if}}
+        }
+
+    {{/each}}
+{{/if}}
+
+{{#if authHelpers}}
+    // ================ Authorization Helper Functions ================
+    {{#each authHelpers}}
+        {{#if description}}/// {{{description}}}{{/if}}
+        pub fn {{{name}}}(
+        {{#if params}}
+            {{#each params}}
+                {{{name}}}: {{{type}}}{{#unless @last}},{{/unless}}
+            {{/each}}
+        {{/if}}
+        ){{#if returns}} -> {{{returns}}}{{else}} -> AccessRule{{/if}} {
+        {{#if body}}
+            {{#each body}}
+                {{{this}}}
+            {{/each}}
+        {{else}}
+            // Default access rule
+            rule!(allow_all)
+        {{/if}}
+        }
+
+    {{/each}}
+{{/if}}
+
+{{#if metadataHelpers}}
+    // ================ Metadata Helper Functions ================
+    {{#each metadataHelpers}}
+        {{#if description}}/// {{{description}}}{{/if}}
+        pub fn {{{name}}}(
+        {{#if params}}
+            {{#each params}}
+                {{{name}}}: {{{type}}}{{#unless @last}},{{/unless}}
+            {{/each}}
+        {{/if}}
+        ){{#if returns}} -> {{{returns}}}{{else}} -> MetadataInit{{/if}} {
+        {{#if body}}
+            {{#each body}}
+                {{{this}}}
+            {{/each}}
+        {{else}}
+            // Default metadata
+            metadata! {
+            init {
+            "name" => "Default Name", locked;
+            "description" => "Default Description", locked;
+            }
+            }
+        {{/if}}
+        }
+
+    {{/each}}
+{{/if}}
+
+{{#if royaltyHelpers}}
+    // ================ Royalty Helper Functions ================
+    {{#each royaltyHelpers}}
+        {{#if description}}/// {{{description}}}{{/if}}
+        pub fn {{{name}}}(
+        {{#if params}}
+            {{#each params}}
+                {{{name}}}: {{{type}}}{{#unless @last}},{{/unless}}
+            {{/each}}
+        {{/if}}
+        ){{#if returns}} -> {{{returns}}}{{else}} -> RoyaltyConfig{{/if}} {
+        {{#if body}}
+            {{#each body}}
+                {{{this}}}
+            {{/each}}
+        {{else}}
+            // Default royalty configuration
+            RoyaltyConfig::default()
+        {{/if}}
+        }
+
+    {{/each}}
+{{/if}}
+
+{{#if packageHelpers}}
+    // ================ Package Helper Functions ================
+    {{#each packageHelpers}}
+        {{#if description}}/// {{{description}}}{{/if}}
+        pub fn {{{name}}}(
+        {{#if params}}
+            {{#each params}}
+                {{{name}}}: {{{type}}}{{#unless @last}},{{/unless}}
+            {{/each}}
+        {{/if}}
+        ){{#if returns}} -> {{{returns}}}{{else}} -> PackageAddress{{/if}} {
+        {{#if body}}
+            {{#each body}}
+                {{{this}}}
+            {{/each}}
+        {{else}}
+            // Default package operation
+            Runtime::package_address()
+        {{/if}}
+        }
+
+    {{/each}}
+{{/if}}
+
+{{#if runtimeHelpers}}
+    // ================ Runtime Helper Functions ================
+    {{#each runtimeHelpers}}
+        {{#if description}}/// {{{description}}}{{/if}}
+        pub fn {{{name}}}(
+        {{#if params}}
+            {{#each params}}
+                {{{name}}}: {{{type}}}{{#unless @last}},{{/unless}}
+            {{/each}}
+        {{/if}}
+        ){{#if returns}} -> {{{returns}}}{{/if}} {
+        {{#if body}}
+            {{#each body}}
+                {{{this}}}
+            {{/each}}
+        {{/if}}
+        }
+
+    {{/each}}
+{{/if}}
+
+{{#if crossBlueprintCalls}}
+    // ================ Cross-Blueprint Call Functions ================
+    {{#each crossBlueprintCalls}}
+        {{#if description}}/// {{{description}}}{{/if}}
+        pub fn {{{name}}}(
+        {{#if params}}
+            {{#each params}}
+                {{{name}}}: {{{type}}}{{#unless @last}},{{/unless}}
+            {{/each}}
+        {{/if}}
+        ){{#if returns}} -> {{{returns}}}{{/if}} {
+        {{#if body}}
+            {{#each body}}
+                {{{this}}}
+            {{/each}}
+        {{else}}
+            // Default cross-blueprint call
+            {{{componentAddress}}}.call::<{{{returnType}}}>(
+            "{{{methodName}}}",
+            {{#if callArgs}}({{{callArgs}}}){{else}}(){{/if}}
+            )
+        {{/if}}
+        }
+
+    {{/each}}
+{{/if}}
+
+{{#if utilityFunctions}}
+    // ================ Utility Functions ================
+    {{#each utilityFunctions}}
+        {{#if description}}/// {{{description}}}{{/if}}
+        {{#if isPublic}}pub {{/if}}fn {{{name}}}(
+        {{#if params}}
+            {{#each params}}
+                {{{name}}}: {{{type}}}{{#unless @last}},{{/unless}}
+            {{/each}}
+        {{/if}}
+        ){{#if returns}} -> {{{returns}}}{{/if}} {
+        {{#if body}}
+            {{#each body}}
+                {{{this}}}
+            {{/each}}
+        {{/if}}
+        }
+
+    {{/each}}
+{{/if}}
+
+{{#if tests}}
+    // ================ Tests ================
+    #[cfg(test)]
+    mod tests {
+    use super::*;
+    use scrypto_unit::*;
+    use transaction::builder::ManifestBuilder;
+
+    {{#each tests}}
+        {{#if description}}/// {{{description}}}{{/if}}
+        #[test]
+        fn {{{name}}}() {
+        // Test setup
+        let mut test_runner = TestRunner::builder().build();
+        {{#if testAccounts}}
+            {{#each testAccounts}}
+                let ({{{name}}}_public_key, _, {{{name}}}_account) = test_runner.new_allocated_account();
+            {{/each}}
+        {{else}}
+            let (public_key, _, account) = test_runner.new_allocated_account();
+        {{/if}}
+
+        {{#if setup}}
+            // Additional setup
+            {{#each setup}}
+                {{{this}}}
+            {{/each}}
+
+        {{/if}}
+        {{#if body}}
+            // Test execution
+            {{#each body}}
+                {{{this}}}
+            {{/each}}
+        {{else}}
+            // Default test implementation
+            assert!(true);
+        {{/if}}
+        }
+
+    {{/each}}
+    }
+{{/if}}
+
+{{#if benchmarks}}
+    // ================ Benchmarks ================
+    #[cfg(feature = "bench")]
+    mod benchmarks {
+    use super::*;
+    use criterion::{black_box, criterion_group, criterion_main, Criterion};
+
+    {{#each benchmarks}}
+        {{#if description}}/// {{{description}}}{{/if}}
+        fn {{{name}}}(c: &mut Criterion) {
+        c.bench_function("{{{name}}}", |b| {
+        b.iter(|| {
+        {{#if body}}
+            {{#each body}}
+                {{{this}}}
+            {{/each}}
+        {{else}}
+            // Default benchmark implementation
+            black_box(());
+        {{/if}}
+        })
+        });
+        }
+
+    {{/each}}
+    criterion_group!(benches{{#each benchmarks}}, {{{name}}}{{/each}});
+    criterion_main!(benches);
+    }
+{{/if}}
+
+{{#if integrationTests}}
+    // ================ Integration Tests ================
+    #[cfg(test)]
+    mod integration_tests {
+    use super::*;
+    use scrypto_unit::*;
+    use transaction::builder::ManifestBuilder;
+
+    {{#each integrationTests}}
+        {{#if description}}/// {{{description}}}{{/if}}
+        #[test]
+        fn {{{name}}}() {
+        let mut test_runner = TestRunner::builder().build();
+
+        {{#if body}}
+            {{#each body}}
+                {{{this}}}
+            {{/each}}
+        {{else}}
+            // Default integration test
+            assert!(true);
+        {{/if}}
+        }
+
+    {{/each}}
+    }
+{{/if}}

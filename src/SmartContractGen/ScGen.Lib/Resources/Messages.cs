@@ -1,9 +1,9 @@
-namespace SC_Gen.Lib.Resources;
+namespace ScGen.Lib.Resources;
 
 /// <summary>
 /// Centralized accessor for localized resource strings used across the application.
 /// 
-/// The <c>Messages</c> class provides strongly-typed, localized access to application messages
+/// The <c>ResultMessages</c> class provides strongly-typed, localized access to application messages
 /// (error messages, notifications, and email templates), simplifying the use of <see cref="ResourceManager"/>.
 /// 
 /// Each property name maps to a key in a .resx file, and this design:
@@ -17,4 +17,8 @@ namespace SC_Gen.Lib.Resources;
 public static class Messages
 {
     private static readonly ResourceManager Resources = new(typeof(BaseMessages).FullName!, typeof(BaseMessages).Assembly);
+    public static string EmptyJson => Resources.Get().AsString();
+    public static string HandlebarTemplateNotFound => Resources.Get().AsString();
+    public static string HandlebarTemplateProcessingError => Resources.Get().AsString();
+
 }

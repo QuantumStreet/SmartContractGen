@@ -30,12 +30,12 @@ public static class HttpAccessor
     /// Extracts the authenticated user's ID from the current HTTP context claims.
     /// Throws if the claim is missing or not a valid GUID.
     /// </summary>
-    public static Guid GetId(this IHttpContextAccessor accessor)
+    public static Guid? GetId(this IHttpContextAccessor accessor)
         => accessor.HttpContext?.User.Claims
             .FirstOrDefault(x => x.Type == CustomClaimTypes.Id)?
             .Value is { } userIdString && Guid.TryParse(userIdString, out Guid userId)
             ? userId
-            : throw new ArgumentNullException(nameof(userId));
+            : null;
 
     /// <summary>
     /// Retrieves the User-Agent header from the incoming HTTP request.
@@ -56,7 +56,7 @@ public static class HttpAccessor
     public static string GetCorrelationId(this IHttpContextAccessor accessor)
     {
         string? headerValue = accessor.HttpContext?.Request.Headers[CorrelationIdHeader].ToString();
-        
+
         return headerValue ?? LoggingHelpers.CreateCorrelationId();
     }
 }

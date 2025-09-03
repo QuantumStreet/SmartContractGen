@@ -40,7 +40,7 @@ public sealed record ResultPatternError
     /// </summary>
     /// <param name="message">The success message. Default is "Ok".</param>
     /// <returns>A <see cref="ResultPatternError"/> instance representing success.</returns>
-    public static ResultPatternError None(string message = Messages.Ok)
+    public static ResultPatternError None(string message = ResultMessages.Ok)
         => new(StatusCodes.Status200OK, message, ErrorType.None);
 
     /// <summary>
@@ -48,7 +48,7 @@ public sealed record ResultPatternError
     /// </summary>
     /// <param name="message">The error message. Default is "Data not found!".</param>
     /// <returns>A <see cref="ResultPatternError"/> representing a not found error.</returns>
-    public static ResultPatternError NotFound(string? message = Messages.NotFound)
+    public static ResultPatternError NotFound(string? message = ResultMessages.NotFound)
         => new(StatusCodes.Status404NotFound, message, ErrorType.NotFound);
 
     /// <summary>
@@ -56,7 +56,7 @@ public sealed record ResultPatternError
     /// </summary>
     /// <param name="message">The error message. Default is "Bad request!".</param>
     /// <returns>A <see cref="ResultPatternError"/> representing a bad request.</returns>
-    public static ResultPatternError BadRequest(string? message = Messages.BadRequest)
+    public static ResultPatternError BadRequest(string? message = ResultMessages.BadRequest)
         => new(StatusCodes.Status400BadRequest, message, ErrorType.BadRequest);
 
     /// <summary>
@@ -64,7 +64,7 @@ public sealed record ResultPatternError
     /// </summary>
     /// <param name="message">The error message. Default is "Already exist!".</param>
     /// <returns>A <see cref="ResultPatternError"/> representing a resource conflict.</returns>
-    public static ResultPatternError AlreadyExist(string? message = Messages.AlreadyExist)
+    public static ResultPatternError AlreadyExist(string? message = ResultMessages.AlreadyExist)
         => new(StatusCodes.Status409Conflict, message, ErrorType.AlreadyExist);
 
     /// <summary>
@@ -72,7 +72,7 @@ public sealed record ResultPatternError
     /// </summary>
     /// <param name="message">The error message. Default is "Conflict!".</param>
     /// <returns>A <see cref="ResultPatternError"/> representing a conflict error.</returns>
-    public static ResultPatternError Conflict(string? message = Messages.Conflict)
+    public static ResultPatternError Conflict(string? message = ResultMessages.Conflict)
         => new(StatusCodes.Status409Conflict, message, ErrorType.Conflict);
 
     /// <summary>
@@ -80,12 +80,12 @@ public sealed record ResultPatternError
     /// </summary>
     /// <param name="message">The error message. Default is "Internal server error!".</param>
     /// <returns>A <see cref="ResultPatternError"/> representing a server error.</returns>
-    public static ResultPatternError InternalServerError(string? message = Messages.InternalServerError)
+    public static ResultPatternError InternalServerError(string? message = ResultMessages.InternalServerError)
         => new(StatusCodes.Status500InternalServerError, message, ErrorType.InternalServerError);
 
-    public static ResultPatternError UnsupportedMediaType(string? message = Messages.UnsupportedMediaType)
+    public static ResultPatternError UnsupportedMediaType(string? message = ResultMessages.UnsupportedMediaType)
         => new(StatusCodes.Status415UnsupportedMediaType, message, ErrorType.UnsupportedMediaType);
 
-    public static ResultPatternError AccessDenied(string? message = Messages.AccessDenied)
+    public static ResultPatternError AccessDenied(string? message = ResultMessages.AccessDenied)
         => new(StatusCodes.Status403Forbidden, message, ErrorType.Forbidden);
 }
