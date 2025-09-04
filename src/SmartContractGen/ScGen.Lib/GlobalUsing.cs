@@ -28,3 +28,4 @@ global using ScGen.Lib.Helpers;
 global using ScGen.Lib.Resources;
 global using System.Net;
 global using System.Text;
+global using ScGen.Lib.Validation;

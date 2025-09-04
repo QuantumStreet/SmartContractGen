@@ -20,5 +20,6 @@ public static class Messages
     public static string EmptyJson => Resources.Get().AsString();
     public static string HandlebarTemplateNotFound => Resources.Get().AsString();
     public static string HandlebarTemplateProcessingError => Resources.Get().AsString();
+    public static string InvalidJsonFile => Resources.Get().AsString();
 
 }

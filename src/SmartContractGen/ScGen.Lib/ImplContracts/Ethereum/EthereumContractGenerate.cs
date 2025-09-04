@@ -45,6 +45,13 @@ public sealed class EthereumContractGenerate : IEthereumContractGenerate
             _httpContextAccessor.GetId().ToString(),
             _httpContextAccessor.GetCorrelationId());
 
+        if (!jsonFile.IsJsonFile())
+        {
+            _logger.ValidationFailed(nameof(GenerateAsync),
+                Messages.InvalidJsonFile, _httpContextAccessor.GetId().ToString());
+            return Result<GenerateContractResponse>.Failure(ResultPatternError.BadRequest(Messages.InvalidJsonFile));
+        }
+
         if (jsonFile.Length == 0)
         {
             _logger.ValidationFailed(nameof(GenerateAsync),
@@ -120,7 +127,7 @@ public sealed class EthereumContractGenerate : IEthereumContractGenerate
             return Result<GenerateContractResponse>.Failure(
                 ResultPatternError.InternalServerError(Messages.HandlebarTemplateProcessingError));
         }
-        
+
         stopwatch.Stop();
         _logger.OperationCompleted(nameof(GenerateAsync),
             stopwatch.ElapsedMilliseconds, _httpContextAccessor.GetCorrelationId());
