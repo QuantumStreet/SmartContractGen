@@ -1,4 +1,7 @@
 EmptyJson=JSON file is empty.
+EmptyFile=File is empty.
 HandlebarTemplateNotFound=HandlebarTemplate file not found.
 HandlebarTemplateProcessingError=Error processing HandlebarTemplate file.
 InvalidJsonFile=Invalid JSON file.
+InvalidSolidityFile=Invalid Solidity file.
+FileTooLarge=File is too large.

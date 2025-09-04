@@ -1,6 +1,6 @@
 namespace ScGen.Lib.ImplContracts.Ethereum;
 
-public sealed class EthereumContractGenerate : IEthereumContractGenerate
+public sealed partial class EthereumContractGenerate : IEthereumContractGenerate
 {
     private readonly ILogger<EthereumContractGenerate> _logger;
     private readonly IHandlebars _handlebars;
@@ -45,98 +45,93 @@ public sealed class EthereumContractGenerate : IEthereumContractGenerate
             _httpContextAccessor.GetId().ToString(),
             _httpContextAccessor.GetCorrelationId());
 
-        if (!jsonFile.IsJsonFile())
-        {
-            _logger.ValidationFailed(nameof(GenerateAsync),
-                Messages.InvalidJsonFile, _httpContextAccessor.GetId().ToString());
-            return Result<GenerateContractResponse>.Failure(ResultPatternError.BadRequest(Messages.InvalidJsonFile));
-        }
-
-        if (jsonFile.Length == 0)
-        {
-            _logger.ValidationFailed(nameof(GenerateAsync),
-                Messages.EmptyJson, _httpContextAccessor.GetId().ToString());
-            return Result<GenerateContractResponse>.Failure(ResultPatternError.BadRequest(Messages.EmptyJson));
-        }
-
-        string jsonContent;
-        using (StreamReader sr = new StreamReader(jsonFile.OpenReadStream()))
-        {
-            jsonContent = await sr.ReadToEndAsync(token).ConfigureAwait(false);
-        }
-
-        jsonContent = WebUtility.HtmlDecode(jsonContent);
-
-        JObject jObj;
         try
         {
-            jObj = JObject.Parse(jsonContent);
+            Result<GenerateContractResponse> validation = Validation(jsonFile);
+            if (!validation.IsSuccess) return validation;
+
+            string jsonContent;
+            using (StreamReader sr = new StreamReader(jsonFile.OpenReadStream()))
+            {
+                jsonContent = await sr.ReadToEndAsync(token).ConfigureAwait(false);
+            }
+
+            jsonContent = WebUtility.HtmlDecode(jsonContent);
+
+            JObject jObj;
+            try
+            {
+                jObj = JObject.Parse(jsonContent);
+            }
+            catch (Exception ex)
+            {
+                _logger.OperationFailedWithException(nameof(GenerateAsync), ex.Message,
+                    _httpContextAccessor.GetId().ToString(), _httpContextAccessor.GetCorrelationId());
+                return Result<GenerateContractResponse>.Failure(ResultPatternError.BadRequest(ex.Message));
+            }
+
+            IDictionary<string, object?> model = jObj.EthereumConvertJToken() as IDictionary<string, object?> ??
+                                                 new Dictionary<string, object?>();
+
+
+            model = model.EthereumCleanModel() as IDictionary<string, object?> ?? new Dictionary<string, object?>();
+
+
+            if (!File.Exists(_handlebarTemplatePath))
+            {
+                _logger.OperationFailed(nameof(GenerateAsync), Messages.HandlebarTemplateNotFound,
+                    _httpContextAccessor.GetId().ToString(), _httpContextAccessor.GetCorrelationId());
+                return Result<GenerateContractResponse>.Failure(
+                    ResultPatternError.InternalServerError(Messages.HandlebarTemplateNotFound));
+            }
+
+            string tplText = await File.ReadAllTextAsync(_handlebarTemplatePath, token).ConfigureAwait(false);
+
+            HandlebarsTemplate<object, object>? template;
+            try
+            {
+                template = _handlebars.Compile(tplText);
+            }
+            catch (Exception ex)
+            {
+                _logger.OperationFailedWithException(nameof(GenerateAsync), ex.Message,
+                    _httpContextAccessor.GetId().ToString(), _httpContextAccessor.GetCorrelationId());
+                return Result<GenerateContractResponse>.Failure(ResultPatternError.InternalServerError(ex.Message));
+            }
+
+            string solidityCode;
+            try
+            {
+                solidityCode = template(model) ?? string.Empty;
+            }
+            catch (Exception ex)
+            {
+                _logger.OperationFailedWithException(nameof(GenerateAsync), ex.Message,
+                    _httpContextAccessor.GetId().ToString(), _httpContextAccessor.GetCorrelationId());
+                return Result<GenerateContractResponse>.Failure(ResultPatternError.InternalServerError(ex.Message));
+            }
+
+            if (string.IsNullOrWhiteSpace(solidityCode))
+            {
+                _logger.OperationFailed(nameof(GenerateAsync), Messages.HandlebarTemplateProcessingError,
+                    _httpContextAccessor.GetId().ToString(), _httpContextAccessor.GetCorrelationId());
+                return Result<GenerateContractResponse>.Failure(
+                    ResultPatternError.InternalServerError(Messages.HandlebarTemplateProcessingError));
+            }
+
+
+            return Result<GenerateContractResponse>.Success(new()
+            {
+                Content = Encoding.UTF8.GetBytes(solidityCode),
+                FileName = jObj.GetEthereumContractName(),
+                ContentType = MediaTypeNames.Text.Plain
+            });
         }
-        catch (Exception ex)
+        finally
         {
-            _logger.OperationFailedWithException(nameof(GenerateAsync), ex.Message,
-                _httpContextAccessor.GetId().ToString(), _httpContextAccessor.GetCorrelationId());
-            return Result<GenerateContractResponse>.Failure(ResultPatternError.BadRequest(ex.Message));
+            stopwatch.Stop();
+            _logger.OperationCompleted(nameof(GenerateAsync),
+                stopwatch.ElapsedMilliseconds, _httpContextAccessor.GetCorrelationId());
         }
-
-        IDictionary<string, object?> model = jObj.EthereumConvertJToken() as IDictionary<string, object?> ??
-                                             new Dictionary<string, object?>();
-
-
-        model = model.EthereumCleanModel() as IDictionary<string, object?> ?? new Dictionary<string, object?>();
-
-
-        if (!File.Exists(_handlebarTemplatePath))
-        {
-            _logger.OperationFailed(nameof(GenerateAsync), Messages.HandlebarTemplateNotFound,
-                _httpContextAccessor.GetId().ToString(), _httpContextAccessor.GetCorrelationId());
-            return Result<GenerateContractResponse>.Failure(
-                ResultPatternError.InternalServerError(Messages.HandlebarTemplateNotFound));
-        }
-
-        string tplText = await File.ReadAllTextAsync(_handlebarTemplatePath, token).ConfigureAwait(false);
-
-        HandlebarsTemplate<object, object>? template;
-        try
-        {
-            template = _handlebars.Compile(tplText);
-        }
-        catch (Exception ex)
-        {
-            _logger.OperationFailedWithException(nameof(GenerateAsync), ex.Message,
-                _httpContextAccessor.GetId().ToString(), _httpContextAccessor.GetCorrelationId());
-            return Result<GenerateContractResponse>.Failure(ResultPatternError.InternalServerError(ex.Message));
-        }
-
-        string solidityCode;
-        try
-        {
-            solidityCode = template(model) ?? string.Empty;
-        }
-        catch (Exception ex)
-        {
-            _logger.OperationFailedWithException(nameof(GenerateAsync), ex.Message,
-                _httpContextAccessor.GetId().ToString(), _httpContextAccessor.GetCorrelationId());
-            return Result<GenerateContractResponse>.Failure(ResultPatternError.InternalServerError(ex.Message));
-        }
-
-        if (string.IsNullOrWhiteSpace(solidityCode))
-        {
-            _logger.OperationFailed(nameof(GenerateAsync), Messages.HandlebarTemplateProcessingError,
-                _httpContextAccessor.GetId().ToString(), _httpContextAccessor.GetCorrelationId());
-            return Result<GenerateContractResponse>.Failure(
-                ResultPatternError.InternalServerError(Messages.HandlebarTemplateProcessingError));
-        }
-
-        stopwatch.Stop();
-        _logger.OperationCompleted(nameof(GenerateAsync),
-            stopwatch.ElapsedMilliseconds, _httpContextAccessor.GetCorrelationId());
-
-        return Result<GenerateContractResponse>.Success(new()
-        {
-            Content = Encoding.UTF8.GetBytes(solidityCode),
-            FileName = jObj.GetEthereumContractName(),
-            ContentType = MediaTypeNames.Text.Plain
-        });
     }
 }

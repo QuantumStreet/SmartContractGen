@@ -1,4 +1,4 @@
-namespace ScGen.Lib.Enums;
+namespace ScGen.Lib.Shared.Enums;
 
 public enum SmartContractLanguage
 {

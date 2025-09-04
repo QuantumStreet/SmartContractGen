@@ -1,4 +1,4 @@
-namespace ScGen.Lib.DTOs.Responses;
+namespace ScGen.Lib.Shared.DTOs.Responses;
 
 public sealed class GenerateContractResponse
 {

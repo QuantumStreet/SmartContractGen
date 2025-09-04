@@ -1,4 +1,4 @@
-namespace ScGen.Lib.Extensions;
+namespace ScGen.Lib.Shared.Extensions;
 
 public static class Json
 {

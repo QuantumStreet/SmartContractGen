@@ -15,17 +15,20 @@ global using System.ComponentModel.DataAnnotations;
 global using System.Net.Mime;
 global using BuildingBlocks.Patterns.Result;
 global using ScGen.Lib.Contracts.BaseContracts;
-global using ScGen.Lib.Enums;
-global using ScGen.Lib.DTOs.Responses;
 global using ScGen.Lib.Contracts.Ethereum;
 global using HandlebarsDotNet;
-global using ScGen.Lib.Constants;
 global using System.Globalization;
 global using Newtonsoft.Json.Linq;
 global using BuildingBlocks.Http;
-global using ScGen.Lib.Extensions;
-global using ScGen.Lib.Helpers;
-global using ScGen.Lib.Resources;
 global using System.Net;
 global using System.Text;
-global using ScGen.Lib.Validation;
+global using ScGen.Lib.Shared.Models;
+global using ScGen.Lib.Shared.Enums;
+global using ScGen.Lib.Shared.Constants;
+global using ScGen.Lib.Shared.DTOs.Responses;
+global using ScGen.Lib.Shared.Resources;
+global using ScGen.Lib.Shared.Extensions;
+global using ScGen.Lib.Shared.Helpers;
+global using ScGen.Lib.Shared.Validation;
+
+

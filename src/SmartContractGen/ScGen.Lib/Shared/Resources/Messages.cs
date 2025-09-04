@@ -1,4 +1,4 @@
-namespace ScGen.Lib.Resources;
+namespace ScGen.Lib.Shared.Resources;
 
 /// <summary>
 /// Centralized accessor for localized resource strings used across the application.
@@ -18,8 +18,11 @@ public static class Messages
 {
     private static readonly ResourceManager Resources = new(typeof(BaseMessages).FullName!, typeof(BaseMessages).Assembly);
     public static string EmptyJson => Resources.Get().AsString();
+    public static string FileTooLarge => Resources.Get().AsString();
+    public static string EmptyFile => Resources.Get().AsString();
     public static string HandlebarTemplateNotFound => Resources.Get().AsString();
     public static string HandlebarTemplateProcessingError => Resources.Get().AsString();
     public static string InvalidJsonFile => Resources.Get().AsString();
+    public static string InvalidSolidityFile => Resources.Get().AsString();
 
 }

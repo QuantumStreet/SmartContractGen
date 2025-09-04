@@ -1,4 +1,4 @@
-namespace ScGen.Lib.DTOs.Responses;
+namespace ScGen.Lib.Shared.DTOs.Responses;
 
 public readonly record struct DeployContractResponse(
     string ContractAddress,

@@ -1,5 +1,5 @@
-namespace ScGen.Lib.DTOs.Requests;
+namespace ScGen.Lib.Shared.DTOs.Requests;
 
-public record CompileContractRequest(
+public record DeployContractRequest(
     [Required] IFormFile Source,
     [Required] SmartContractLanguage Language);

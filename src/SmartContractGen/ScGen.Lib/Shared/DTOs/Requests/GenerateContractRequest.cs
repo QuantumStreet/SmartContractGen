@@ -1,4 +1,4 @@
-namespace ScGen.Lib.DTOs.Requests;
+namespace ScGen.Lib.Shared.DTOs.Requests;
 
 public record GenerateContractRequest(
     [Required] IFormFile JsonFile,

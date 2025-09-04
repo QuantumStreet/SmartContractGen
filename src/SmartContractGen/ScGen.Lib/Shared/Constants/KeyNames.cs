@@ -1,4 +1,4 @@
-namespace ScGen.Lib.Constants;
+namespace ScGen.Lib.Shared.Constants;
 
 public static class KeyNames
 {

@@ -1,3 +1,5 @@
+using ScGen.Lib.Shared.DTOs.Responses;
+
 namespace ScGen.Lib.ImplContracts.Ethereum;
 
 public sealed class EthereumContractDeploy : IEthereumContractDeploy

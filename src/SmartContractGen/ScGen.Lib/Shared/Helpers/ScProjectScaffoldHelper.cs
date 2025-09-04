@@ -1,4 +1,5 @@
-namespace ScGen.Lib.Helpers;
+namespace ScGen.Lib.Shared.Helpers;
+
 public static class ScProjectScaffoldHelper
 {
     public static void CreateEthereumProjectTemplate(string projectPath, ILogger logger)
