@@ -1,6 +1,3 @@
-using ScGen.Lib.Shared.DTOs.Responses;
-using ScGen.Lib.Shared.Extensions;
-
 namespace ScGen.Lib.ImplContracts.Ethereum;
 
 public sealed partial class EthereumContractCompile(
@@ -23,7 +20,7 @@ public sealed partial class EthereumContractCompile(
         try
         {
             ProcessExecutionResult result = await ProcessExtensions
-                .RunSolcAsync(sourceFilePath, tempDir, token);
+                .RunSolcAsync(sourceFilePath, tempDir,logger, token);
             if (!result.IsSuccess)
                 return Result<EthereumCompileContractResponse>.Failure(
                     ResultPatternError.InternalServerError(result.StandardError + result.GetErrorMessage()));

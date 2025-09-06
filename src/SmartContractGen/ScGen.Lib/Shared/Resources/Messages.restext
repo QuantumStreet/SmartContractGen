@@ -5,3 +5,29 @@ HandlebarTemplateProcessingError=Error processing HandlebarTemplate file.
 InvalidJsonFile=Invalid JSON file.
 InvalidSolidityFile=Invalid Solidity file.
 FileTooLarge=File is too large.
+
+RpcUrlIsRequired=RPC URL is required.
+RpcUrlMustBeValid=RPC URL must be a valid URL.
+PrivateKeyIsRequired=Private key is required.
+PrivateKeyMustBeValid=Private key must be at least 64 characters.
+PrivateKeyMustBeValidHex=Private key must be a valid hexadecimal string.
+GasLimitMustBeValid=Gas limit must be at least 21000.
+
+
+InvalidAbiFile=Invalid ABI file.
+EmptyAbi=ABI file is empty.
+InvalidBytecodeFile=Invalid bytecode file.
+EmptyBytecode=Bytecode file is empty.
+NodeProcessNotRun=Node process is not running.
+FailedToStartProcess=Failed to start process.
+FailedToStartNode=Failed to start node.
+EthereumNodeNotRunning=Ethereum node is not running.
+FileNotFound=File not found.
+WorkingDirectoryNotFound=Working directory not found.
+PortAlreadyUse=Port '{0}' is already in use.
+FailedToStartGanache=Failed to start Ganache process.
+GanacheFailed=Ganache failed to become ready within '{0}' seconds
+GanacheSuccessStart=Ganache started successfully on port '{0}'.
+StartDeploymentInEthereum=Starting contract deployment to '{0}'...
+ContractSuccessfullyDeployed=Contract successfully deployed at address: '{0}'
+ContractFailedDeployed=Contract deployment failed. Transaction status: '{0}'

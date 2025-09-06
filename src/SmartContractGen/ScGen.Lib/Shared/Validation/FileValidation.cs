@@ -7,6 +7,8 @@ public static class FileValidation
     private const string Rs = ".rs";
     private const string Sol = ".sol";
     private const string Zip = ".zip";
+    private const string Abi = ".abi";
+    private const string Bin = ".bin";
 
     private static readonly HashSet<string> ContractExtensions = new(StringComparer.OrdinalIgnoreCase)
     {
@@ -23,6 +25,24 @@ public static class FileValidation
 
         return Path.GetExtension(file.FileName)
             .Equals(Json, StringComparison.OrdinalIgnoreCase);
+    }
+
+    public static bool IsAbiFile(this IFormFile file)
+    {
+        if (string.IsNullOrWhiteSpace(file.FileName))
+            return false;
+
+        return Path.GetExtension(file.FileName)
+            .Equals(Abi, StringComparison.OrdinalIgnoreCase);
+    }
+
+    public static bool IsEthereumBinFile(this IFormFile file)
+    {
+        if (string.IsNullOrWhiteSpace(file.FileName))
+            return false;
+
+        return Path.GetExtension(file.FileName)
+            .Equals(Bin, StringComparison.OrdinalIgnoreCase);
     }
 
     public static bool IsSolidityFile(this IFormFile file)

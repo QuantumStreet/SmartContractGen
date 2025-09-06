@@ -20,9 +20,33 @@ public static class Messages
     public static string EmptyJson => Resources.Get().AsString();
     public static string FileTooLarge => Resources.Get().AsString();
     public static string EmptyFile => Resources.Get().AsString();
+    public static string FileNotFound => Resources.Get().AsString();
+    public static string WorkingDirectoryNotFound => Resources.Get().AsString();
     public static string HandlebarTemplateNotFound => Resources.Get().AsString();
     public static string HandlebarTemplateProcessingError => Resources.Get().AsString();
     public static string InvalidJsonFile => Resources.Get().AsString();
     public static string InvalidSolidityFile => Resources.Get().AsString();
 
+    public static string RpcUrlIsRequired => Resources.Get().AsString();
+    public static string RpcUrlMustBeValid => Resources.Get().AsString();
+    public static string PrivateKeyIsRequired => Resources.Get().AsString();
+    public static string PrivateKeyMustBeValid => Resources.Get().AsString();
+    public static string PrivateKeyMustBeValidHex => Resources.Get().AsString();
+    public static string GasLimitMustBeValid => Resources.Get().AsString();
+    public static string InvalidAbiFile => Resources.Get().AsString();
+    public static string EmptyAbi => Resources.Get().AsString();
+    public static string InvalidBytecodeFile => Resources.Get().AsString();
+    public static string EmptyBytecode => Resources.Get().AsString();
+    public static string NodeProcessNotRun => Resources.Get().AsString();
+    public static string FailedToStartProcess => Resources.Get().AsString();
+    public static string FailedToStartNode => Resources.Get().AsString();
+    public static string EthereumNodeNotRunning => Resources.Get().AsString();
+
+    public static string PortAlreadyUse(int port) => Resources.Get().Format(port);
+    public static string GanacheFailed(double totalSeconds) => Resources.Get().Format(totalSeconds);
+    public static string GanacheSuccessStart (int port) => Resources.Get().Format(port);
+    public static string  StartDeploymentInEthereum (string address) => Resources.Get().Format(address);
+    public static string  ContractSuccessfullyDeployed (string address) => Resources.Get().Format(address);
+    public static string  ContractFailedDeployed (BigInteger value) => Resources.Get().Format(value);
+    public static string FailedToStartGanache => Resources.Get().AsString();
 }

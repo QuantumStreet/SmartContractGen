@@ -30,5 +30,12 @@ global using ScGen.Lib.Shared.Resources;
 global using ScGen.Lib.Shared.Extensions;
 global using ScGen.Lib.Shared.Helpers;
 global using ScGen.Lib.Shared.Validation;
-
-
+global using Microsoft.Extensions.Options;
+global using ScGen.Lib.Shared.Options;
+global using System.Numerics;
+global using Nethereum.Web3;
+global using Nethereum.Model;
+global using FluentValidation;
+global using ScGen.Lib.Shared.Patterns.Factory;
+global using System.Net.Sockets;
+global using Nethereum.RPC.Eth.DTOs;
